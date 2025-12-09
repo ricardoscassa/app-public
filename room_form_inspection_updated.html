@@ -4466,7 +4466,7 @@ function renderFlexBarcodeRows() {
                 (flex.unassignedBarcodes || []).forEach(bc => {
                     csv += `"${bc}","",""\n`;
                 });
-                downloadCsvFile(csv, `flexible_tracking_${new Date().toISOString().split('T')[0]}.csv`);
+                downloadCsvFile(csv, `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`);
             } catch (err) {
                 console.error(err);
                 showMessageModal('Export Failed', 'Failed to export flexible data.');
