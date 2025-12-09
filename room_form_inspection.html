@@ -600,12 +600,88 @@
         }
 
         /* Code Check Page Styles */
-        .code-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e1e5e9;
-        }
+        
+.code-header {
+    position: relative;
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e1e5e9;
+}
+
+/* Global barcode counters for Asset Tagz (top-right, iOS-style) */
+.flex-counter-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none; /* hidden by default (desktop) */
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    padding: 8px 0;
+}
+
+.flex-counter-card {
+    min-width: 120px;
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.flex-counter-card .label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #8E8E93;
+}
+
+.flex-counter-card .value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1C1C1E;
+    line-height: 1.2;
+}
+
+.flex-counter-card.total .value {
+    color: #007AFF;
+}
+
+.flex-counter-card.assigned .value {
+    color: #34C759;
+}
+
+/* Phone-only: show counters and stack under title */
+@media (max-width: 768px) {
+    #flexCheckPage .code-header {
+        position: relative;
+        padding-top: 0;
+    }
+
+    #flexCheckPage .flex-counter-panel {
+        position: static;
+        width: 100%;
+        align-items: stretch;
+        margin-top: 10px;
+        flex-direction: row;
+        justify-content: flex-end;
+        gap: 10px;
+        display: flex; /* visible only on phones */
+    }
+
+    #flexCheckPage .flex-counter-card {
+        min-width: 0;
+        flex: 0 0 auto;
+        align-items: flex-start;
+    }
+}
+
         
         .code-title {
             font-size: 1.8rem;
@@ -1725,6 +1801,19 @@ Room Codes (Room- Codes)
             <div class="card">
                 <div class="code-header">
                     <h2 id="flexCurrentRoomTitle" class="code-title">Flexible Tracking</h2>
+
+                    <!-- Global barcode counters (same values across all rooms) -->
+                    <div class="flex-counter-panel">
+                        <div class="flex-counter-card total">
+                            <div class="label">Available</div>
+                            <div class="value" id="flexTotalBarcodes">0</div>
+                        </div>
+                        <div class="flex-counter-card assigned">
+                            <div class="label">Assigned</div>
+                            <div class="value" id="flexAssignedBarcodes">0</div>
+                        </div>
+                    </div>
+
                     <div id="flexRoomSelect" class="custom-dropdown">
                         <button class="custom-dropdown-button" type="button">
                             <span class="custom-dropdown-text">Select Room</span>
@@ -2614,6 +2703,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 showFlexCheckPage();
                 updateFlexCheckPage();
                 renderFlexBarcodeRows();
+                updateFlexCounters();
             } else if (appState.seStSvRooms.length > 0) {
                 roomNumbersTextarea.value = appState.seStSvRooms.join('\n');
                 showRoomSeStSvCheckPage();
@@ -3800,6 +3890,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             showFlexCheckPage();
             updateFlexCheckPage();
             renderFlexBarcodeRows();
+            updateFlexCounters();
         }
 
 
@@ -3843,11 +3934,39 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             const nextBtn = document.getElementById('flexNextRoom');
             prevBtn.disabled = flex.currentRoomIndex === 0;
             nextBtn.textContent = flex.currentRoomIndex === rooms.length - 1 ? 'Complete' : 'Next Room';
+
+            updateFlexCounters();
         }
 
 
 // Helper to ensure an ECS code is unique across ALL barcodes in ALL rooms
 // Helper to find all existing assignments for an ECS code
+
+// Global counters updater for Asset Tagz (flexible tracking)
+function updateFlexCounters() {
+    const totalEl = document.getElementById('flexTotalBarcodes');
+    const assignedEl = document.getElementById('flexAssignedBarcodes');
+    if (!totalEl || !assignedEl) return;
+
+    const flex = appState.flexibleInspections || {};
+    const rooms = flex.rooms || [];
+    let assignedCount = 0;
+
+    rooms.forEach(room => {
+        const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+        assignedCount += Object.keys(map).length;
+    });
+
+    const unassignedCount = (flex.unassignedBarcodes || []).length;
+
+    // Available goes down as Assigned goes up
+    const available = unassignedCount;
+    const assigned = assignedCount;
+
+    totalEl.textContent = available;
+    assignedEl.textContent = assigned;
+}
+
 function findEcsAssignments(ecsCode, excludeBarcode = null) {
     const flex = appState.flexibleInspections || {};
     const rooms = (flex.rooms || []);
@@ -4399,6 +4518,8 @@ function renderFlexBarcodeRows() {
         });
         container.appendChild(loadMoreBtn);
     }
+
+    updateFlexCounters();
 }
 
 
