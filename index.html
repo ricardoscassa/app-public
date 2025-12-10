@@ -4567,27 +4567,31 @@ function renderFlexBarcodeRows() {
         function exportFlexibleToCsv() {
             try {
                 let csv = 'Barcode,ECS Code,Room\n';
+        
                 const flex = appState.flexibleInspections || {};
                 const rooms = flex.rooms || [];
+                const roomStatusMap = appState.roomStatus || {};
         
-                // 1) Main section: barcodes + ECS + room
+                // 1 Main section — Barcodes assigned to rooms
                 rooms.forEach(room => {
-                    const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+                    const map = flex.assignments?.[room] || {};
+        
                     Object.keys(map).forEach(bc => {
                         const ecs = map[bc] || '';
                         csv += `"${bc}","${ecs.replace(/"/g, '""')}","${room}"\n`;
                     });
                 });
         
-                // 2) Any remaining unassigned barcodes (no room / ECS)
+                // 2️ Unassigned barcodes — FIXED (no more "" blank room)
                 (flex.unassignedBarcodes || []).forEach(bc => {
                     csv += `"${bc}","",""\n`;
                 });
         
-                // 3) Blank line then room status section at the END of the CSV
-                const roomStatusMap = appState.roomStatus || {};
-                csv += '\nRoom,Status\n';
+                // 3️ Blank line (separator)
+                csv += '\n# --- ROOM STATUS SECTION ---\n';
+                csv += 'Room,Status\n';
         
+                // 4️ Room status block
                 rooms.forEach(room => {
                     const status = roomStatusMap[room] || '';
                     csv += `"${room}","${String(status).replace(/"/g, '""')}"\n`;
@@ -4597,12 +4601,12 @@ function renderFlexBarcodeRows() {
                     csv,
                     `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`
                 );
+        
             } catch (err) {
                 console.error(err);
                 showMessageModal('Export Failed', 'Failed to export flexible data.');
             }
         }
-
 
         function showFlexFileUploadModal() {
             document.getElementById('flexFileUploadModal').classList.add('active');
@@ -4657,4 +4661,5 @@ function renderFlexBarcodeRows() {
 
     </script>
 </body>
+
 </html>
