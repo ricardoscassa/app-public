@@ -4567,36 +4567,42 @@ function renderFlexBarcodeRows() {
         function exportFlexibleToCsv() {
             try {
                 let csv = 'Barcode,ECS Code,Room\n';
-                const flex = appState.flexibleInspections;
+                const flex = appState.flexibleInspections || {};
                 const rooms = flex.rooms || [];
+        
+                // 1) Main section: barcodes + ECS + room
                 rooms.forEach(room => {
-                    const map = flex.assignments[room] || {};
+                    const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
                     Object.keys(map).forEach(bc => {
                         const ecs = map[bc] || '';
                         csv += `"${bc}","${ecs.replace(/"/g, '""')}","${room}"\n`;
                     });
                 });
-                // also include any remaining unassigned with empty room/ECS
+        
+                // 2) Any remaining unassigned barcodes (no room / ECS)
                 (flex.unassignedBarcodes || []).forEach(bc => {
                     csv += `"${bc}","",""\n`;
                 });
-
-                // try both possible property names, in case of different structures
-                const roomStatusMap = flex.roomStatuses || flex.roomStatus || {};
         
-                // blank line, then new header for the room status section
+                // 3) Blank line then room status section at the END of the CSV
+                const roomStatusMap = appState.roomStatus || {};
                 csv += '\nRoom,Status\n';
         
                 rooms.forEach(room => {
-                    const status = (roomStatusMap && roomStatusMap[room]) ? roomStatusMap[room] : '';
+                    const status = roomStatusMap[room] || '';
                     csv += `"${room}","${String(status).replace(/"/g, '""')}"\n`;
-                
-                downloadCsvFile(csv, `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`);
+                });
+        
+                downloadCsvFile(
+                    csv,
+                    `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`
+                );
             } catch (err) {
                 console.error(err);
                 showMessageModal('Export Failed', 'Failed to export flexible data.');
             }
         }
+
 
         function showFlexFileUploadModal() {
             document.getElementById('flexFileUploadModal').classList.add('active');
