@@ -1849,6 +1849,8 @@ Room Codes (Room- Codes)
                     <button id="flexDownloadJson" class="button warning">Download Data (JSON)</button>
                     <button id="flexUploadBarcodes" class="button">Upload Barcodes JSON</button>
                     <button id="backToFlexInput" class="button secondary">Back to Input</button>
+                    <!-- New button to export room status (Access / No Access) without overwriting the existing export -->
+                    <button id="flexExportRoomStatus" class="button success">Export Room Status</button>
                 </div>
             </div>
         </div>
@@ -2207,12 +2209,12 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('backToSeStSvInput').addEventListener('click', backToSeStSvInput);
 
             // Room status buttons
-            document.getElementById('noAccessBtn').addEventListener('click', () => set('no-access'));
-            document.getElementById('completedBtn').addEventListener('click', () => set('completed'));
-            document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCode('no-access'));
-            document.getElementById('codeCompletedBtn').addEventListener('click', () => setCode('completed'));
-            document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSv('no-access'));
-            document.getElementById('seStSvCompletedBtn').addEventListener('click', () => setSeStSv('completed'));
+            document.getElementById('noAccessBtn').addEventListener('click', () => setRoomStatus('no-access'));
+            document.getElementById('completedBtn').addEventListener('click', () => setRoomStatus('completed'));
+            document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCodeRoomStatus('no-access'));
+            document.getElementById('codeCompletedBtn').addEventListener('click', () => setCodeRoomStatus('completed'));
+            document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSvRoomStatus('no-access'));
+            document.getElementById('seStSvCompletedBtn').addEventListener('click', () => setSeStSvRoomStatus('completed'));
 
             // Completion page buttons
             document.getElementById('exportExcelCompleteEA').addEventListener('click', exportToCsv);
@@ -2292,6 +2294,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('flexDownloadJson').addEventListener('click', downloadJsonData);
             document.getElementById('backToFlexInput').addEventListener('click', backToFlexInput);
             document.getElementById('flexUploadBarcodes').addEventListener('click', showFlexFileUploadModal);
+            // Export the room access status separately (does not override the main export)
+            document.getElementById('flexExportRoomStatus').addEventListener('click', exportFlexRoomStatusToCsv);
 
             // Flexible dropdown
             setupCustomDropdown('flexRoomSelect', (index) => {
@@ -2334,8 +2338,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
 
             document.getElementById('flexUploadFile').addEventListener('click', uploadFlexBarcodesFile);
             // Flexible room status buttons
-            document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexible('no-access'));
-            document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexible('completed'));
+            document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('no-access'));
+            document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('completed'));
 
 
             document.getElementById('flexAddRoomBtn').addEventListener('click', function() {
@@ -4567,44 +4571,50 @@ function renderFlexBarcodeRows() {
         function exportFlexibleToCsv() {
             try {
                 let csv = 'Barcode,ECS Code,Room\n';
-        
-                const flex = appState.flexibleInspections || {};
+                const flex = appState.flexibleInspections;
                 const rooms = flex.rooms || [];
-                const roomStatusMap = appState.roomStatus || {};
-        
-                // 1 Main section — Barcodes assigned to rooms
                 rooms.forEach(room => {
-                    const map = flex.assignments?.[room] || {};
-        
+                    const map = flex.assignments[room] || {};
                     Object.keys(map).forEach(bc => {
                         const ecs = map[bc] || '';
                         csv += `"${bc}","${ecs.replace(/"/g, '""')}","${room}"\n`;
                     });
                 });
-        
-                // 2️ Unassigned barcodes — FIXED (no more "" blank room)
+                // also include any remaining unassigned with empty room/ECS
                 (flex.unassignedBarcodes || []).forEach(bc => {
                     csv += `"${bc}","",""\n`;
                 });
-        
-                // 3️ Blank line (separator)
-                csv += '\n# --- ROOM STATUS SECTION ---\n';
-                csv += 'Room,Status\n';
-        
-                // 4️ Room status block
-                rooms.forEach(room => {
-                    const status = roomStatusMap[room] || '';
-                    csv += `"${room}","${String(status).replace(/"/g, '""')}"\n`;
-                });
-        
-                downloadCsvFile(
-                    csv,
-                    `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`
-                );
-        
+                downloadCsvFile(csv, `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`);
             } catch (err) {
                 console.error(err);
                 showMessageModal('Export Failed', 'Failed to export flexible data.');
+            }
+        }
+
+        // Export only the room access status (Access / No Access) as a separate CSV file.
+        // This helper does not overwrite the existing flexible export and simply
+        // outputs a list of rooms with their corresponding status. The status
+        // labels are mapped from the internal keys stored in appState.roomStatus.
+        function exportFlexRoomStatusToCsv() {
+            try {
+                let csv = 'Room,Status\n';
+                const flex = appState.flexibleInspections;
+                const rooms = flex.rooms || [];
+                rooms.forEach(room => {
+                    let statusKey = (appState.roomStatus || {})[room] || '';
+                    let statusLabel = '';
+                    if (statusKey === 'completed') {
+                        statusLabel = 'Access';
+                    } else if (statusKey === 'no-access') {
+                        statusLabel = 'No Access';
+                    }
+                    csv += `"${room}","${statusLabel}"\n`;
+                });
+                // Use a unique filename so it does not conflict with the main export
+                downloadCsvFile(csv, `room_status_${new Date().toISOString().split('T')[0]}.csv`);
+            } catch (err) {
+                console.error(err);
+                showMessageModal('Export Failed', 'Failed to export room statuses.');
             }
         }
 
@@ -4661,5 +4671,4 @@ function renderFlexBarcodeRows() {
 
     </script>
 </body>
-
 </html>
