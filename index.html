@@ -1,0 +1,4660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Inspection App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            /* iOS optimizations */
+            -webkit-text-size-adjust: 100%;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Allow text selection for textareas and inputs */
+        textarea, input {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        
+        .container {
+            max-width: 900px; /* Increased max-width for better layout */
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            flex: 1;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Main Menu Styles */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .menu-button {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        .menu-button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .menu-button.secondary {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        
+        .menu-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        /* Room Input Page Styles */
+        .room-input-section {
+            margin-bottom: 25px;
+        }
+        
+        .room-input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 1.1rem;
+        }
+        
+        .room-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            /* iOS optimizations */
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .room-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-height: 50px;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button.secondary {
+            background: #6c757d;
+        }
+        
+        .button.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .button.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .button.warning {
+            background: linear-gradient(135deg, #f0932b 0%, #e67e22 100%);
+        }
+
+        .button.warning:hover {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(240, 147, 43, 0.4);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* PC-only Dropdown Editor Styles */
+        .dropdown-editor {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e1e5e9;
+        }
+
+        .dropdown-editor h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .dropdown-editor-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .dropdown-editor-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+        }
+
+        .dropdown-editor-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .dropdown-editor-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .dropdown-editor-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .dropdown-editor-btn.remove {
+            background: #dc3545;
+            color: white;
+        }
+
+        .dropdown-editor-btn.remove:hover {
+            background: #c82333;
+        }
+
+        .dropdown-editor-btn.add {
+            background: #28a745;
+            color: white;
+            width: 100%;
+        }
+
+        .dropdown-editor-btn.add:hover {
+            background: #218838;
+        }
+
+        .pc-only {
+            display: none;
+        }
+
+        @media (min-width: 1025px) {
+            .pc-only {
+                display: block !important;
+            }
+        }
+        
+        /* Sequential Check Page Styles */
+        .room-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .room-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        /* Enhanced Custom Dropdown Styles with Visual Indicators */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .custom-dropdown-button {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            /* iOS optimizations */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .custom-dropdown-button:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .custom-dropdown-button:hover {
+            border-color: #667eea;
+        }
+
+        .custom-dropdown-arrow {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+            color: #667eea;
+        }
+
+        .custom-dropdown-button.open .custom-dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .custom-dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .custom-dropdown-options.show {
+            display: block;
+        }
+
+        .custom-dropdown-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            /* iOS optimizations */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .custom-dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .custom-dropdown-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .custom-dropdown-option.selected {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            font-weight: 500;
+        }
+
+        /* Visual Status Indicators for Dropdown Options */
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid transparent;
+        }
+
+        .status-indicator.completed {
+            background-color: #4caf50;
+            border-color: #2e7d32;
+        }
+
+        .status-indicator.no-access {
+            background-color: #f44336;
+            border-color: #c62828;
+        }
+
+        .status-indicator.default {
+            background-color: #e0e0e0;
+            border-color: #bdbdbd;
+        }
+
+        /* Alternative: Use checkmark and X symbols */
+        .status-symbol {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .status-symbol.completed {
+            color: #4caf50;
+        }
+
+        .status-symbol.completed::before {
+            content: "✓";
+        }
+
+        .status-symbol.no-access {
+            color: #f44336;
+        }
+
+        .status-symbol.no-access::before {
+            content: "✗";
+        }
+
+        .status-symbol.default {
+            color: #bdbdbd;
+        }
+
+        .status-symbol.default::before {
+            content: "○";
+        }
+
+        /* Custom dropdown status color coding for button */
+        .custom-dropdown-button.no-access {
+            background-color: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+
+        .custom-dropdown-button.completed {
+            background-color: #e8f5e8;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .custom-dropdown-button.no-access:focus {
+            border-color: #f44336;
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+        }
+
+        .custom-dropdown-button.completed:focus {
+            border-color: #4caf50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .room-select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            background-color: white;
+            appearance: none; /* Remove default browser styling */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23667eea%22%20d%3D%22M287%2C114.7L157.4%2C244.3c-2.3%2C2.3-5.3%2C3.5-8.4%2C3.5s-6.1-1.2-8.4-3.5L5.4%2C114.7c-4.7-4.7-4.7-12.3%2C0-17s12.3-4.7%2C17%2C0l135%2C135l135-135c4.7-4.7%2C12.3-4.7%2C17%2C0S291.7%2C110%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            /* iOS optimizations */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .room-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Room status color coding */
+        .room-select.no-access {
+            background-color: #ffebee;
+            border-color: #f44336;
+            color: #c82828;
+        }
+
+        .room-select.completed {
+            background-color: #e8f5e8;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .room-select.no-access:focus {
+            border-color: #f44336;
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+        }
+
+        .room-select.completed:focus {
+            border-color: #4caf50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .checks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .check-item {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .check-item.checked {
+            background: #e8f5e8;
+            border-color: #28a745;
+        }
+
+        .check-label {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .check-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .check-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .check-btn.yes {
+            color: #28a745;
+            border-color: #28a745;
+        }
+
+        .check-btn.yes.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .check-btn.no {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .check-btn.no.active {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Code Check Page Styles */
+        
+.code-header {
+    position: relative;
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e1e5e9;
+}
+
+/* Global barcode counters for Asset Tagz (top-right, iOS-style) */
+.flex-counter-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none; /* hidden by default (desktop) */
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    padding: 8px 0;
+}
+
+.flex-counter-card {
+    min-width: 120px;
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.flex-counter-card .label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #8E8E93;
+}
+
+.flex-counter-card .value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1C1C1E;
+    line-height: 1.2;
+}
+
+.flex-counter-card.total .value {
+    color: #007AFF;
+}
+
+.flex-counter-card.assigned .value {
+    color: #34C759;
+}
+
+/* Phone-only: show counters and stack under title */
+@media (max-width: 768px) {
+    #flexCheckPage .code-header {
+        position: relative;
+        padding-top: 0;
+    }
+
+    #flexCheckPage .flex-counter-panel {
+        position: static;
+        width: 100%;
+        align-items: stretch;
+        margin-top: 10px;
+        flex-direction: row;
+        justify-content: flex-end;
+        gap: 10px;
+        display: flex; /* visible only on phones */
+    }
+
+    #flexCheckPage .flex-counter-card {
+        min-width: 0;
+        flex: 0 0 auto;
+        align-items: flex-start;
+    }
+}
+
+        
+        .code-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+        
+        .progress-info {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+        
+        .code-inspection-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .grid-header {
+            display: none; /* Hide headers in card layout */
+        }
+
+        .grid-row {
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .grid-cell {
+            padding: 0;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .grid-cell.code-cell {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1C1C1E;
+            letter-spacing: -0.3px;
+        }
+
+        .grid-cell.controls-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .control-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* --- FIX alignment between Status and Comment dropdowns --- */
+        .controls-row {
+            align-items: flex-start; /* Make both top-aligned first */
+        }
+
+        .control-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* Ensure both dropdowns have identical height and top spacing */
+        .status-button,
+        .comment-textarea {
+            height: 44px;
+            line-height: 44px;
+            padding: 0 12px;
+            margin-top: 12px;
+            box-sizing: border-box;
+        }
+
+        /* Small tweak for Safari / Chrome pixel difference */
+        .comment-textarea {
+            margin-top: 4px; /* adjust +1 or -1px if still off */
+        }
+
+
+        .control-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8E8E93;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .status-button {
+            width: 100%;
+            height: 44px;
+            padding: 0 12px;
+            font-size: 16px;
+            font-weight: 400;
+            color: #1C1C1E;
+            background-color: #F8F9FA;
+            border: 1px solid #D1D1D6;
+            border-radius: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            position: relative;
+        }
+
+        .status-button::after {
+            content: '▼';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #8E8E93;
+        }
+
+        .status-button:focus {
+            outline: none;
+            border-color: #007AFF;
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .status-button:active {
+            background-color: #FFFFFF;
+            border-color: #007AFF;
+        }
+
+        .status-button.selected {
+            background-color: #e8f5e8;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .status-options {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .status-options.active {
+            display: flex;
+        }
+
+        .status-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            white-space: nowrap;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .status-option:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Enhanced Comment Section with Predefined Choices */
+        .comment-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .comment-choices {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .comment-choice-btn {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .comment-choice-btn:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .comment-choice-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .comment-textarea {
+            width: 100%;
+            height: 44px;
+            padding: 0 12px;
+            padding-right: 30px;
+            border: 1px solid #D1D1D6;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            resize: none;
+            box-sizing: border-box;
+            background-color: #F8F9FA;
+            color: #1C1C1E;
+            transition: all 0.2s ease;
+            /* iOS optimizations */
+            -webkit-appearance: none;
+            appearance: none;
+            line-height: 44px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .comment-textarea:focus {
+            outline: none;
+            border-color: #007AFF;
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Custom input field for manual comment entry */
+        .custom-comment-input {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #D1D1D6;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            resize: vertical;
+            box-sizing: border-box;
+            background-color: #F8F9FA;
+            color: #1C1C1E;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+            display: none;
+            /* iOS optimizations */
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .custom-comment-input.show {
+            display: block;
+        }
+
+        .custom-comment-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Room status buttons */
+        .room-status-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .status-btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .status-btn.no-access {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        .status-btn.no-access:hover {
+            background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+        }
+
+        .status-btn.completed {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+        }
+
+        .status-btn.completed:hover {
+            background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e1e5e9;
+        }
+        
+        .nav-button {
+            padding: 12px 25px;
+            font-size: 1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .action-buttons .button {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        /* Success States */
+        .success-message {
+            text-align: center;
+            padding: 40px;
+            color: #28a745;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        /* File upload styles */
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px dashed transparent;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .file-input-label.drag-over {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+            word-break: break-all;
+        }
+
+        /* SE/ST/SV specific styles */
+        .se-st-sv-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .entries-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .entry-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+        }
+
+        .entry-label {
+            font-weight: 600;
+            color: #333;
+            min-width: 30px;
+            flex-shrink: 0;
+        }
+
+        .entry-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 1rem;
+            min-width: 0; /* Allow input to shrink on small screens */
+            /* iOS optimizations */
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .entry-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .remove-entry-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+            flex-shrink: 0;
+            white-space: nowrap;
+            /* iOS touch optimization */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .remove-entry-btn:hover {
+            background: #c82333;
+        }
+
+        /* Message modal styles */
+        .message-content {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons .button {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+        }
+        
+        /* Responsive Design - Enhanced for iOS */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .code-inspection-grid {
+                gap: 12px;
+            }
+            
+            .grid-row {
+                padding: 14px;
+            }
+            
+            .grid-cell.code-cell {
+                font-size: 17px;
+            }
+            
+            .controls-row {
+                gap: 8px;
+            }
+            
+            .status-button,
+            .comment-textarea {
+                font-size: 15px;
+                height: 42px;
+                line-height: 42px;
+            }
+            
+            .control-label {
+                font-size: 10px;
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .button {
+                min-width: auto;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-button {
+                width: 100%;
+            }
+            
+            .room-select {
+                font-size: 0.9rem;
+                padding: 8px;
+            }
+
+            /* Enhanced mobile dropdown styling */
+            .custom-dropdown-option {
+                padding: 12px 15px;
+                font-size: 1rem;
+            }
+
+            .status-indicator {
+                width: 14px;
+                height: 14px;
+            }
+
+            .status-symbol {
+                width: 18px;
+                height: 18px;
+                font-size: 14px;
+            }
+
+            /* SE/ST/SV mobile improvements */
+            .se-st-sv-section {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .entry-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 12px;
+            }
+
+            .entry-label {
+                min-width: auto;
+                text-align: center;
+                font-size: 1.1rem;
+            }
+
+            .textarea-wrapper {
+                position: relative;
+                width: 100%;
+            }
+
+            .entry-textarea {
+                min-height: 150px; /* Increased height for better usability */
+                font-size: 1.1rem;
+                padding: 12px;
+                padding-right: 50px; /* Extra space for counter on mobile */
+                text-align: left; /* Align text to left for multi-line input */
+            }
+
+            .code-count {
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 6px 10px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                font-weight: bold;
+                display: none; /* Hidden by default */
+                z-index: 10;
+                pointer-events: none; /* Prevent interference with textarea interaction */
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                min-width: 24px;
+                text-align: center;
+            }
+
+            .remove-entry-btn {
+                align-self: center;
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+
+            /* Mobile optimizations for code counter */
+            .code-count {
+                bottom: 10px;
+                right: 10px;
+                font-size: 1rem; /* Slightly larger for mobile */
+                padding: 8px 12px;
+                border-radius: 10px;
+                min-width: 28px;
+            }
+
+            /* Enhanced comment choices for mobile */
+            .comment-choices {
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+
+            .comment-choice-btn {
+                padding: 8px 14px;
+                font-size: 0.9rem;
+                border-radius: 8px;
+            }
+
+            .comment-textarea {
+                min-height: 44px; /* Larger touch target for iOS */
+                font-size: 16px; /* Prevent zoom on iOS */
+                padding: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .code-title {
+                font-size: 1.3rem;
+            }
+
+            .se-st-sv-section {
+                padding: 10px;
+            }
+
+            .entry-item {
+                padding: 10px;
+            }
+
+            .entry-input {
+                font-size: 1rem;
+                padding: 10px;
+            }
+
+            .remove-entry-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+
+            /* Extra small screen optimizations for code counter */
+            .code-count {
+                bottom: 12px;
+                right: 12px;
+                font-size: 1.1rem; /* Even larger for very small screens */
+                padding: 10px 14px;
+                border-radius: 12px;
+                min-width: 32px;
+            }
+
+            /* Enhanced comment choices for very small screens */
+            .comment-choice-btn {
+                padding: 10px 16px;
+                font-size: 1rem;
+                border-radius: 10px;
+            }
+
+            .comment-textarea {
+                min-height: 48px; /* Even larger touch target */
+                font-size: 16px;
+                padding: 12px;
+            }
+        }
+
+        /* iOS Safari specific optimizations */
+        @supports (-webkit-touch-callout: none) {
+            .button, .check-btn, .status-btn, .comment-choice-btn {
+                -webkit-appearance: none;
+                border-radius: 10px;
+            }
+            
+            .room-textarea, .comment-textarea, .entry-input {
+                -webkit-appearance: none;
+                border-radius: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Production Control Inspection Form</h1>
+            <p>Comprehensive room and code inspection system</p>
+        </div>
+
+        <!-- Main Menu Page -->
+        <div id="mainMenuPage" class="page active">
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #333;">Choose Inspection Type</h2>
+                <div class="menu-buttons">
+                    <button id="siteInspectionBtn" class="menu-button primary">
+                        EA - Inspection
+                        <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                            ROOM-BY-ROOM INSPECTION
+                        </div>
+                    </button>
+                    <button id="codeInspectionBtn" class="menu-button secondary">
+                        ECS INSPECTION
+                        <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                            Room codes with detailed checks
+                        </div>
+                    </button>
+                    <button id="roomSeStSvInspectionBtn" class="menu-button" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white;">
+                        Room Inspection SE/ST/SV
+                        <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                            Room number with SE/ST/SV entries
+                        </div>
+                    </button>
+                    <button id="flexibleTrackingBtn" class="menu-button" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
+                        Asset Tagz
+                        <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                            Rooms & Barcodes (link later via ECS)
+                        </div>
+                    </button>
+    
+                    <button id="uploadJsonMainMenu" class="menu-button" style="background: linear-gradient(135deg, #f0932b 0%, #e67e22 100%); color: white;">
+                        Upload Inspection Data
+                        <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                            Load a previous .json file
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Input Page (Original) -->
+        <div id="roomInputPage" class="page">
+            <div class="card">
+                <div class="room-input-section">
+                    <label for="roomList">Enter Room Names/Numbers:</label>
+                    <textarea
+                        id="roomList"
+                        class="room-textarea"
+                        placeholder="Enter room names, one per line:"
+                    ></textarea>
+                    <div class="help-text">
+                        Enter each room name or number on a separate line. You can paste a list from another source.
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="startInspection" class="button">Start Inspection</button>
+                    <button id="loadSavedData" class="button secondary">Load Saved Data</button>
+                    <button id="resetApp" class="button danger">Reset Application</button>
+                    <button id="backToMainMenu" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Input Page (Enhanced with Dropdown Editor) -->
+        <div id="codeInputPage" class="page">
+            <div class="card">
+                <div class="room-input-section">
+                    <label for="codeList">Enter Room Codes:</label>
+                    <textarea
+                        id="codeList"
+                        class="room-textarea"
+                        placeholder="Enter room codes in the format:
+Room Codes (Room- Codes)
+1HLF0000ZL- 1HLF01ST0000
+1HLF0001ZL- 1HLF10SV0000
+1HLF10ST0000
+1LHF10SE0000 
+..."
+                    ></textarea>
+                    <div class="help-text">
+                        Enter room codes with their associated codes. Use the format shown above. Each line can contain a room code followed by its associated codes, or just individual codes.
+                    </div>
+                </div>
+
+                <!-- PC-only Dropdown Editor Section -->
+                <div class="dropdown-editor pc-only">
+                    <h3>Edit Status Dropdown Options (PC Only)</h3>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                        Customize the status dropdown options that appear in the ECS Inspection. Changes will be saved and can be exported/imported.
+                    </p>
+                    <div class="dropdown-editor-list" id="dropdownEditorList">
+                        <!-- Dropdown options will be dynamically added here -->
+                    </div>
+                    <button id="addDropdownOption" class="dropdown-editor-btn add">+ Add New Option</button>
+                </div>
+
+                <!-- New PC-only Dropdown Editor for Comments -->
+                <div id="commentDropdownEditor" class="dropdown-editor pc-only">
+                    <h3>Edit Comment Dropdown Options (PC Only)</h3>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                        Customize the predefined comment options that appear in the ECS Inspection.
+                    </p>
+                    <div class="dropdown-editor-list" id="commentDropdownEditorList">
+                        <!-- Comment dropdown options will be dynamically added here -->
+                    </div>
+                    <button id="addCommentDropdownOption" class="dropdown-editor-btn add">+ Add New Comment Option</button>
+                </div>
+
+
+                <div class="action-buttons">
+                    <button id="startCodeInspection" class="button">Start Inspection</button>
+                    <button id="loadSavedCodeData" class="button secondary">Load Saved Data</button>
+                    <button id="resetCodeApp" class="button danger">Reset Application</button>
+                    <button id="backToMainMenuFromCode" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room SE/ST/SV Input Page -->
+        <div id="roomSeStSvInputPage" class="page">
+            <div class="card">
+                <div class="room-input-section">
+                    <label for="roomNumbers">Enter Room Numbers:</label>
+                    <textarea
+                        id="roomNumbers"
+                        class="room-textarea"
+                        placeholder="Enter room numbers, one per line:
+..."
+                    ></textarea>
+                    <div class="help-text">
+                        Enter each room number on a separate line.
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="startSeStSvInspection" class="button">Start Inspection</button>
+                    <button id="loadSavedSeStSvData" class="button secondary">Load Saved Data</button>
+                    <button id="resetSeStSvApp" class="button danger">Reset Application</button>
+                    <button id="backToMainMenuFromSeStSv" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check Page (Original) -->
+        <div id="checkPage" class="page">
+            <div class="card">
+                <div class="room-header">
+                    <h2 id="currentRoomTitle" class="room-title">Room 101</h2>
+                    <div id="roomSelect" class="custom-dropdown">
+                        <button class="custom-dropdown-button" type="button">
+                            <span class="custom-dropdown-text">Select Room</span>
+                            <span class="custom-dropdown-arrow">▼</span>
+                        </button>
+                        <div class="custom-dropdown-options"></div>
+                    </div>
+                    <div class="room-status-buttons">
+                        <button id="noAccessBtn" class="status-btn no-access">No Access</button>
+                        <button id="completedBtn" class="status-btn completed">Access</button>
+                    </div>
+                    <div id="progressInfo" class="progress-info">Room 1 of 5</div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill" style="width: 20%"></div>
+                    </div>
+                </div>
+                <div id="checksContainer" class="checks-grid">
+                </div>
+                <div class="navigation">
+                    <button id="prevRoom" class="button nav-button secondary">Previous Room</button>
+                    <button id="nextRoom" class="button nav-button">Next Room</button>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportExcel" class="button success">Export to CSV</button>
+                    <button id="downloadJsonCheckPage" class="button warning">Download Data (JSON)</button>
+                    <button id="backToInput" class="button secondary">Back to Input</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Check Page (Enhanced with Predefined Comment Choices) -->
+        <div id="codeCheckPage" class="page">
+            <div class="card">
+                <div class="code-header">
+                    <h2 id="currentCodeRoomTitle" class="code-title">Room: 1HLF0104ZL</h2>
+                    <div id="codeRoomSelect" class="custom-dropdown">
+                        <button class="custom-dropdown-button" type="button">
+                            <span class="custom-dropdown-text">Select Room</span>
+                            <span class="custom-dropdown-arrow">▼</span>
+                        </button>
+                        <div class="custom-dropdown-options"></div>
+                    </div>
+                    <div class="room-status-buttons">
+                        <button id="codeNoAccessBtn" class="status-btn no-access">No Access</button>
+                        <button id="codeCompletedBtn" class="status-btn completed">Access</button>
+                    </div>
+                    <div id="codeProgressInfo" class="progress-info">Room 1 of 5</div>
+                    <div class="progress-bar">
+                        <div id="codeProgressFill" class="progress-fill" style="width: 20%"></div>
+                    </div>
+                </div>
+                <div id="codeChecksContainer" class="code-inspection-grid">
+                    <!-- Headers -->
+                    <div class="grid-header">Code</div>
+                    <div class="grid-header">Status</div>
+                    <div class="grid-header">Comment</div>
+                    <!-- Code rows will be inserted here by JavaScript -->
+                </div>
+                <div class="navigation">
+                    <button id="prevCodeRoom" class="button nav-button secondary">Previous Room</button>
+                    <button id="nextCodeRoom" class="button nav-button">Next Room</button>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportCodeExcel" class="button success">Export to CSV</button>
+                     <button id="downloadJsonCodeCheckPage" class="button warning">Download Data (JSON)</button>
+                    <button id="backToCodeInput" class="button secondary">Back to Input</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room SE/ST/SV Check Page -->
+        <div id="roomSeStSvCheckPage" class="page">
+            <div class="card">
+                <div class="code-header">
+                    <h2 id="currentSeStSvRoomTitle" class="code-title">Room: 1001</h2>
+                    <div id="seStSvRoomSelect" class="custom-dropdown">
+                        <button class="custom-dropdown-button" type="button">
+                            <span class="custom-dropdown-text">Select Room</span>
+                            <span class="custom-dropdown-arrow">▼</span>
+                        </button>
+                        <div class="custom-dropdown-options"></div>
+                    </div>
+                    <div class="room-status-buttons">
+                        <button id="seStSvNoAccessBtn" class="status-btn no-access">No Access</button>
+                        <button id="seStSvCompletedBtn" class="status-btn completed">Access</button>
+                    </div>
+                    <div id="seStSvProgressInfo" class="progress-info">Room 1 of 5</div>
+                    <div class="progress-bar">
+                        <div id="seStSvProgressFill" class="progress-fill" style="width: 20%"></div>
+                    </div>
+                </div>
+
+                <div id="seStSvEntriesContainer">
+                    <div class="se-st-sv-section">
+                        <h3 style="color: #333; margin-bottom: 15px;">SE</h3>
+                        <div class="textarea-wrapper">
+                            <textarea class="entry-textarea" id="seTextarea" placeholder="Enter SE codes, one per line"></textarea>
+                            <span class="code-count" id="seCount"></span>
+                        </div>
+                    </div>
+
+                    <div class="se-st-sv-section">
+                        <h3 style="color: #333; margin-bottom: 15px;">ST</h3>
+                        <div class="textarea-wrapper">
+                            <textarea class="entry-textarea" id="stTextarea" placeholder="Enter ST codes, one per line"></textarea>
+                            <span class="code-count" id="stCount"></span>
+                        </div>
+                    </div>
+
+                    <div class="se-st-sv-section">
+                        <h3 style="color: #333; margin-bottom: 15px;">SV</h3>
+                        <div class="textarea-wrapper">
+                            <textarea class="entry-textarea" id="svTextarea" placeholder="Enter SV codes, one per line"></textarea>
+                            <span class="code-count" id="svCount"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="navigation">
+                    <button id="prevSeStSvRoom" class="button nav-button secondary">Previous Room</button>
+                    <button id="nextSeStSvRoom" class="button nav-button">Next Room</button>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportSeStSvCsv" class="button success">Export to CSV</button>
+                    <button id="downloadJsonSeStSvCheckPage" class="button warning">Download Data (JSON)</button>
+                    <button id="backToSeStSvInput" class="button secondary">Back to Input</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Flexible Tracking Input Page -->
+        <div id="flexInputPage" class="page">
+            <div class="card">
+                <div class="room-input-section">
+                    <label for="flexRoomList">Enter Room Numbers (optional):</label>
+                    <textarea
+                        id="flexRoomList"
+                        class="room-textarea"
+                        placeholder="Enter room numbers, one per line (or leave empty to attach rooms later)..."
+                    ></textarea>
+                    <div class="help-text">
+                        You may skip rooms for now to import only barcodes. You will attach a room and ECS code to each barcode on the next page.
+                    </div>
+                </div>
+                <div class="room-input-section">
+                    <label for="flexBarcodeList">Enter Barcodes:</label>
+                    <textarea
+                        id="flexBarcodeList"
+                        class="room-textarea"
+                        placeholder="Enter barcodes, one per line..."
+                    ></textarea>
+                    <div class="help-text">
+                        Barcodes are initially unlinked. On the next page, for each room you will see the unassigned barcodes as
+                        <code>[Barcode] [ECS Code]</code>. Once you set an ECS code, that barcode becomes attached to that room and disappears from other rooms.
+                    </div>
+                </div>
+
+                <div class="room-input-section">
+                    <label for="flexEcsCodeList">Enter ECS Codes (optional):</label>
+                    <textarea
+                        id="flexEcsCodeList"
+                        class="room-textarea"
+                        placeholder="Enter ECS codes, one per line (or leave empty to type them during inspection)..."
+                    ></textarea>
+                    <div class="help-text">
+                        If you provide ECS codes here, they will appear as a dropdown list when assigning ECS codes on the next page. Each code can only be used once, but you can still type new codes manually during inspection.
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="startFlexibleInspection" class="button">Start Flexible Inspection</button>
+                    <button id="flexLoadSaved" class="button secondary">Load Saved Data</button>
+                    <button id="flexReset" class="button danger">Reset Flexible</button>
+                    <button id="backToMainMenuFromFlex" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flexible Tracking Check/Link Page -->
+        <div id="flexCheckPage" class="page">
+            <div class="card">
+                <div class="code-header">
+                    <h2 id="flexCurrentRoomTitle" class="code-title">Flexible Tracking</h2>
+
+                    <!-- Global barcode counters (same values across all rooms) -->
+                    <div class="flex-counter-panel">
+                        <div class="flex-counter-card total">
+                            <div class="label">Available</div>
+                            <div class="value" id="flexTotalBarcodes">0</div>
+                        </div>
+                        <div class="flex-counter-card assigned">
+                            <div class="label">Assigned</div>
+                            <div class="value" id="flexAssignedBarcodes">0</div>
+                        </div>
+                    </div>
+
+                    <div id="flexRoomSelect" class="custom-dropdown">
+                        <button class="custom-dropdown-button" type="button">
+                            <span class="custom-dropdown-text">Select Room</span>
+                            <span class="custom-dropdown-arrow">▼</span>
+                        </button>
+                        <div class="custom-dropdown-options"></div>
+                    </div>
+                    <div id="flexProgressInfo" class="progress-info">Room 1 of 1</div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <input id="flexNewRoomInput" type="text" class="entry-input" placeholder="Add a new room...">
+                        <button id="flexAddRoomBtn" class="button secondary" style="padding:10px 16px; min-width:auto;">Add Room</button>
+                    </div>
+                    
+                    <div class="room-status-buttons">
+                        <button id="flexNoAccessBtn" class="status-btn no-access">No Access</button>
+                        <button id="flexAccessBtn" class="status-btn completed">Access</button>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="flexProgressFill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="flexBarcodeContainer" class="code-inspection-grid">
+                    <!-- Rows of [Barcode] [ECS Code input] will render here -->
+                </div>
+
+                <div class="navigation">
+                    <button id="flexPrevRoom" class="button nav-button secondary">Previous Room</button>
+                    <button id="flexNextRoom" class="button nav-button">Next Room</button>
+                </div>
+                <div class="action-buttons">
+                    <button id="flexExportCsv" class="button success">Export to CSV</button>
+                    <button id="flexDownloadJson" class="button warning">Download Data (JSON)</button>
+                    <button id="flexUploadBarcodes" class="button">Upload Barcodes JSON</button>
+                    <button id="backToFlexInput" class="button secondary">Back to Input</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flexible Upload Modal -->
+        <div id="flexFileUploadModal" class="modal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 20px; color: #333;">Upload Barcodes JSON</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="flexJsonFileInput" class="file-input" accept=".json,application/json">
+                    <label for="flexJsonFileInput" class="file-input-label">
+                        Choose JSON File or Drag & Drop
+                    </label>
+                    <div id="flexFileName" class="file-name"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button id="flexUploadFile" class="button">Upload</button>
+                    <button id="flexCancelUpload" class="button secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Page -->
+        <div id="completionPageEA" class="page">
+            <div class="card">
+                <div class="success-message">
+                    <h2 style="margin-bottom: 20px;">Inspection Complete!</h2>
+                    <p>All rooms have been inspected successfully.</p>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportExcelCompleteEA" class="button success">Export to CSV</button>
+                    <button id="continueEditingCompleteEA" class="button secondary">Continue Editing</button>
+                    <button id="backToMainMenuCompleteEA" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+             
+        <div id="completionPageECS" class="page">
+            <div class="card">
+                <div class="success-message">
+                    <h2 style="margin-bottom: 20px;">Inspection Complete!</h2>
+                    <p>All rooms have been inspected successfully.</p>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportExcelCompleteECS" class="button success">Export to CSV</button>
+                    <button id="continueEditingCompleteECS" class="button secondary">Continue Editing</button>
+                    <button id="backToMainMenuCompleteECS" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+                
+        <div id="completionPageSeSvSt" class="page">
+            <div class="card">
+                <div class="success-message">
+                    <h2 style="margin-bottom: 20px;">Inspection Complete!</h2>
+                    <p>All rooms have been inspected successfully.</p>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportExcelCompleteSeSvSt" class="button success">Export to CSV</button>
+                    <button id="continueEditingCompleteSeSvSt" class="button secondary">Continue Editing</button>
+                    <button id="backToMainMenuCompleteSeSvSt" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+              
+        <div id="completionPageFlexible" class="page">
+            <div class="card">
+                <div class="success-message">
+                    <h2 style="margin-bottom: 20px;">Inspection Complete!</h2>
+                    <p>All rooms have been inspected successfully.</p>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportExcelCompleteFlexible" class="button success">Export to CSV</button>
+                    <button id="continueEditingCompleteFlexible" class="button secondary">Continue Editing</button>
+                    <button id="backToMainMenuCompleteFlexible" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div id="resetModal" class="modal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 20px; color: #dc3545;">Reset Application</h3>
+                <p style="margin-bottom: 20px;">Are you sure you want to reset the application? This will delete all data and cannot be undone.</p>
+                <div class="modal-buttons">
+                    <button id="confirmReset" class="button danger">Reset</button>
+                    <button id="cancelReset" class="button secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Modal -->
+        <div id="fileUploadModal" class="modal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 20px; color: #333;">Upload Data File</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="jsonFileInput" class="file-input" accept=".json">
+                    <label for="jsonFileInput" class="file-input-label">
+                        Choose JSON File or Drag & Drop
+                    </label>
+                    <div id="fileName" class="file-name"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button id="uploadFile" class="button">Upload</button>
+                    <button id="cancelUpload" class="button secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Modal (Now supports confirmation for duplicates) -->
+        <div id="messageModal" class="modal">
+            <div class="modal-content">
+                <h3 id="messageTitle" style="margin-bottom: 20px; color: #333;">Message</h3>
+                <p id="messageContent" class="message-content">Message content here</p>
+                <div class="modal-buttons">
+                    <!-- Default OK button (for simple messages) -->
+                    <button id="messageOk" class="button">OK</button>
+                    <!-- Confirmation buttons (for duplicate handling) -->
+                    <button id="messageConfirm" class="button success" style="display: none;">Accept with Suffix</button>
+                    <button id="messageCancel" class="button secondary" style="display: none;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <style>
+      /* iOS vertical/touch optimizations for new lock/load controls */
+      .button.lock-btn { min-width: 44px; min-height: 44px; }
+      #flexBarcodeContainer { overflow-x: hidden; }
+    </style>
+
+    <style>
+      /* iOS-style SVG padlocks that change color */
+      .lock-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: none !important;
+        color: inherit !important;
+        box-shadow: none !important;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        padding: 0 !important;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .lock-btn svg {
+        width: 22px;
+        height: 22px;
+        transition: fill 0.25s ease;
+      }
+      .lock-btn.locked svg {
+        fill: #ff3b30; /* iOS red */
+      }
+      .lock-btn.unlocked svg {
+        fill: #34c759; /* iOS green */
+      }
+      .lock-btn:active { transform: scale(0.9); }
+    </style>
+
+<script>
+        // Global variables
+        let appState = {
+            
+            flexibleInspections: {
+                rooms: [],
+                currentRoomIndex: 0,
+                unassignedBarcodes: [],
+                assignments: {}, // { room: { barcode: ecsCode } }
+                inspections: [], // list of uploaded barcode sets
+                ecsPresets: [],
+                locks: {},
+                poolVisibleCount: 10,
+                isFlexibleMode: false
+            },
+rooms: [],
+            currentRoomIndex: 0,
+            checkData: {},
+            roomStatus: {},
+            isInspectionMode: false,
+            roomCodes: {},
+            currentCodeRoomIndex: 0,
+            codeSpecificComments: {},
+            seStSvRooms: [],
+            currentSeStSvRoomIndex: 0,
+            seStSvData: {},
+            customStatusOptions: [],
+            customCommentOptions: []
+        };
+
+        // Default comment choices for ECS Inspection
+        const defaultCommentOptions = [
+            "Previously Installed",
+            "Can be Installed",
+            "Issue with Install",
+            "No Access"
+        ];
+
+        // Check labels for site inspection
+        const checkLabels = [
+            'Bylor',
+            'MEH',
+            'Other',
+            'Walled in eqpt',
+            'Other eqpt',
+            'SSW',
+            'Supports',
+            'Pipes',
+            'Clamps',
+            'Cable trays',
+            'Cables',
+            'CBS',
+            'HVAC/Ducting',
+            'Not started',
+            'Partially installed',
+            'Mostly installed',
+            'Fully installed',
+            'Hydrodem',
+            'Access egress routes',
+            'Stored eqpt',
+            'Floor',
+            'Walls',
+            'In progress',
+            'Comments'
+        ];
+
+        // Grouped check labels for better organization
+        const groupedCheckLabels = [
+            { group: 'Is there anyone working in the room?', questions: ['Bylor', 'MEH', 'Other'] },
+            { group: 'What\'s installed?', questions: ['Walled in eqpt', 'Other eqpt', 'SSW', 'Supports', 'Pipes', 'Clamps', 'Cable trays', 'Cables', 'CBS','HVAC/Ducting'] },
+            { group: 'Support installation status', questions: ['Not started', 'Partially installed', 'Mostly installed', 'Fully installed'] },
+            { group: 'Are there any obstruction present to MEH work?', questions: ['Hydrodem', 'Access egress routes', 'Stored eqpt'] },
+            { group: 'Coating', questions: ['Floor', 'Walls', 'In progress'] },
+            { group: 'Comments', questions: ['Comments'] }
+        ];
+
+        // Default status options for code inspection
+        const defaultCodeStatusOptions = [
+            'Available',
+            'CBS Installation',
+            'Clamps Not welded',
+            'Embedment Plate not surveyed',
+            'Embedment Plate PIA Required',
+            'Equipment/Material Blocking Work Access',
+            'No Access - Unable To Verify',
+            'Previously Installed',
+            'Protection Covering Embedment Plate',
+            'Room Not Available',
+            'Possible Scaffold Amendment Required',
+            'Supports Not installed Pipe/Tray/Duct',
+            'TCO (Temporary Construction Opening)',
+            'Embedment Plate Labelled Wrong',
+            'Embedment plate Not available',
+            'Non-Conforming Product TAG on support',
+            'NDT Required On Supports'
+        ];
+
+        // Get current status options (custom or default)
+        function getCodeStatusOptions() {
+            if (appState.customStatusOptions && appState.customStatusOptions.length > 0) {
+                return appState.customStatusOptions;
+            }
+            return defaultCodeStatusOptions;
+        }
+
+        // Get current comment options (custom or default)
+        function getCommentOptions() {
+            if (appState.customCommentOptions && appState.customCommentOptions.length > 0) {
+                return appState.customCommentOptions;
+            }
+            return defaultCommentOptions;
+        }
+
+        // DOM elements
+        const roomListTextarea = document.getElementById('roomList');
+        const codeListTextarea = document.getElementById('codeList');
+        const roomNumbersTextarea = document.getElementById('roomNumbers');
+
+        const flexRoomListTextarea = document.getElementById('flexRoomList');
+const flexBarcodeListTextarea = document.getElementById('flexBarcodeList');
+const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
+// Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataFromStorage();
+            setupEventListeners();
+            renderDropdownEditor(); // Initialize status dropdown editor
+            renderCommentDropdownEditor(); // Initialize comment dropdown editor
+
+            const hasEA      = appState.rooms && appState.rooms.length > 0;
+            const hasECS     = appState.roomCodes && Object.keys(appState.roomCodes).length > 0;
+            const hasFlex    = appState.flexibleInspections &&
+                               (appState.flexibleInspections.rooms?.length > 0 ||
+                                appState.flexibleInspections.unassignedBarcodes?.length > 0);
+            const hasSeStSv  = appState.seStSvRooms && appState.seStSvRooms.length > 0;
+            
+            // Check if we're in inspection mode and show appropriate page
+            if (appState.isInspectionMode || hasEA || hasECS || hasFlex || hasSeStSv) {
+                refreshUIFromState();
+            } else {
+                showMainMenu();
+            }
+        });
+
+        function setupEventListeners() {
+            // Main menu buttons
+            document.getElementById('siteInspectionBtn').addEventListener('click', showRoomInputPage);
+            document.getElementById('flexibleTrackingBtn').addEventListener('click', showFlexInputPage);
+            document.getElementById('codeInspectionBtn').addEventListener('click', showCodeInputPage);
+            document.getElementById('roomSeStSvInspectionBtn').addEventListener('click', showRoomSeStSvInputPage);
+            document.getElementById('uploadJsonMainMenu').addEventListener('click', () => showFileUploadModal());
+
+            // Room input page buttons
+            document.getElementById('startInspection').addEventListener('click', startInspection);
+            document.getElementById('loadSavedData').addEventListener('click', loadSavedData);
+            document.getElementById('resetApp').addEventListener('click', () => showResetModal('site'));
+            document.getElementById('backToMainMenu').addEventListener('click', showMainMenu);
+
+            // Code input page buttons
+            document.getElementById('startCodeInspection').addEventListener('click', startCodeInspection);
+            document.getElementById('loadSavedCodeData').addEventListener('click', loadSavedData);
+            document.getElementById('resetCodeApp').addEventListener('click', () => showResetModal('code'));
+            document.getElementById('backToMainMenuFromCode').addEventListener('click', showMainMenu);
+
+            // SE/ST/SV input page buttons
+            document.getElementById('startSeStSvInspection').addEventListener('click', startSeStSvInspection);
+            document.getElementById('loadSavedSeStSvData').addEventListener('click', loadSavedData);
+            document.getElementById('resetSeStSvApp').addEventListener('click', () => showResetModal('seStSv'));
+            document.getElementById('backToMainMenuFromSeStSv').addEventListener('click', showMainMenu);
+
+            // Check page buttons
+            document.getElementById('prevRoom').addEventListener('click', () => navigateRoom(-1));
+            document.getElementById('nextRoom').addEventListener('click', () => navigateRoom(1));
+            document.getElementById('exportExcel').addEventListener('click', exportToCsv);
+            document.getElementById('downloadJsonCheckPage').addEventListener('click', downloadJsonData);
+            document.getElementById('backToInput').addEventListener('click', backToInput);
+
+            // Code check page buttons
+            document.getElementById('prevCodeRoom').addEventListener('click', () => navigateCodeRoom(-1));
+            document.getElementById('nextCodeRoom').addEventListener('click', () => navigateCodeRoom(1));
+            document.getElementById('exportCodeExcel').addEventListener('click', exportCodeToCsv);
+            document.getElementById('downloadJsonCodeCheckPage').addEventListener('click', downloadJsonData);
+            document.getElementById('backToCodeInput').addEventListener('click', backToCodeInput);
+
+            // SE/ST/SV check page buttons
+            document.getElementById('prevSeStSvRoom').addEventListener('click', () => navigateSeStSvRoom(-1));
+            document.getElementById('nextSeStSvRoom').addEventListener('click', () => navigateSeStSvRoom(1));
+            document.getElementById('exportSeStSvCsv').addEventListener('click', exportSeStSvToCsv);
+            document.getElementById('downloadJsonSeStSvCheckPage').addEventListener('click', downloadJsonData);
+            document.getElementById('backToSeStSvInput').addEventListener('click', backToSeStSvInput);
+
+            // Room status buttons
+            document.getElementById('noAccessBtn').addEventListener('click', () => set('no-access'));
+            document.getElementById('completedBtn').addEventListener('click', () => set('completed'));
+            document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCode('no-access'));
+            document.getElementById('codeCompletedBtn').addEventListener('click', () => setCode('completed'));
+            document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSv('no-access'));
+            document.getElementById('seStSvCompletedBtn').addEventListener('click', () => setSeStSv('completed'));
+
+            // Completion page buttons
+            document.getElementById('exportExcelCompleteEA').addEventListener('click', exportToCsv);
+            document.getElementById('exportExcelCompleteECS').addEventListener('click', exportCodeToCsv);
+            document.getElementById('exportExcelCompleteSeSvSt').addEventListener('click', exportSeStSvToCsv);
+            document.getElementById('exportExcelCompleteFlexible').addEventListener('click', exportFlexibleToCsv);
+            // Continue Editing buttons
+            document.getElementById('continueEditingCompleteEA').addEventListener('click', showCheckPage);
+            document.getElementById('continueEditingCompleteECS').addEventListener('click', showCodeCheckPage);
+            document.getElementById('continueEditingCompleteSeSvSt').addEventListener('click', showRoomSeStSvCheckPage);
+            document.getElementById('continueEditingCompleteFlexible').addEventListener('click', showFlexCheckPage);
+            // Return Main Menu Buttons
+            document.getElementById('backToMainMenuCompleteEA').addEventListener('click', showMainMenu);
+            document.getElementById('backToMainMenuCompleteECS').addEventListener('click', showMainMenu);
+            document.getElementById('backToMainMenuCompleteSeSvSt').addEventListener('click', showMainMenu);
+            document.getElementById('backToMainMenuCompleteFlexible').addEventListener('click', showMainMenu);
+
+            // Modal buttons
+            document.getElementById('confirmReset').addEventListener('click', confirmReset);
+            document.getElementById('cancelReset').addEventListener('click', hideResetModal);
+            document.getElementById('uploadFile').addEventListener('click', uploadFile);
+            document.getElementById('cancelUpload').addEventListener('click', hideFileUploadModal);
+            document.getElementById('messageOk').addEventListener('click', hideMessageModal);
+
+            // Dropdown editor buttons
+            document.getElementById('addDropdownOption').addEventListener('click', addDropdownOption);
+            document.getElementById('addCommentDropdownOption').addEventListener('click', addCommentDropdownOption);
+
+
+            // Custom dropdown setup
+            setupCustomDropdown('roomSelect', (index) => {
+                appState.currentRoomIndex = index;
+                updateCheckPage();
+                updateCheckStates();
+                saveDataToStorage();
+            });
+
+            setupCustomDropdown('codeRoomSelect', (index) => {
+                appState.currentCodeRoomIndex = index;
+                updateCodeCheckPage();
+                generateCodeCheckItems();
+                updateCodeCheckStates();
+                saveDataToStorage();
+            });
+
+            setupCustomDropdown('seStSvRoomSelect', (index) => {
+                appState.currentSeStSvRoomIndex = index;
+                updateSeStSvPage();
+                generateSeStSvEntries();
+                saveDataToStorage();
+            });
+
+            // File input handling
+            const fileInput = document.getElementById('jsonFileInput');
+            const fileLabel = document.querySelector('.file-input-label');
+            const fileName = document.getElementById('fileName');
+
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    fileName.textContent = e.target.files[0].name;
+                } else {
+                    fileName.textContent = '';
+                }
+            });
+
+
+            // Flexible input page buttons
+            document.getElementById('startFlexibleInspection').addEventListener('click', startFlexibleInspection);
+            document.getElementById('flexLoadSaved').addEventListener('click', loadSavedData);
+            document.getElementById('flexReset').addEventListener('click', () => showResetModal('flex'));
+            document.getElementById('backToMainMenuFromFlex').addEventListener('click', showMainMenu);
+
+            // Flexible check page buttons
+            document.getElementById('flexPrevRoom').addEventListener('click', () => navigateFlexRoom(-1));
+            document.getElementById('flexNextRoom').addEventListener('click', () => navigateFlexRoom(1));
+            document.getElementById('flexExportCsv').addEventListener('click', exportFlexibleToCsv);
+            document.getElementById('flexDownloadJson').addEventListener('click', downloadJsonData);
+            document.getElementById('backToFlexInput').addEventListener('click', backToFlexInput);
+            document.getElementById('flexUploadBarcodes').addEventListener('click', showFlexFileUploadModal);
+
+            // Flexible dropdown
+            setupCustomDropdown('flexRoomSelect', (index) => {
+                appState.flexibleInspections.currentRoomIndex = index;
+                updateFlexCheckPage();
+                renderFlexBarcodeRows();
+                saveDataToStorage();
+            });
+
+            // Flexible file input handling
+            const flexFileInput = document.getElementById('flexJsonFileInput');
+            const flexFileLabel = document.querySelector('#flexFileUploadModal .file-input-label');
+            const flexFileName = document.getElementById('flexFileName');
+
+            if (flexFileInput && flexFileLabel) {
+                flexFileInput.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        flexFileName.textContent = e.target.files[0].name;
+                    } else {
+                        flexFileName.textContent = '';
+                    }
+                });
+                flexFileLabel.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    flexFileLabel.classList.add('drag-over');
+                });
+                flexFileLabel.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    flexFileLabel.classList.remove('drag-over');
+                });
+                flexFileLabel.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    flexFileLabel.classList.remove('drag-over');
+                    if (e.dataTransfer.files.length > 0) {
+                        flexFileInput.files = e.dataTransfer.files;
+                        flexFileName.textContent = e.dataTransfer.files[0].name;
+                    }
+                });
+            }
+
+            document.getElementById('flexUploadFile').addEventListener('click', uploadFlexBarcodesFile);
+            // Flexible room status buttons
+            document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexible('no-access'));
+            document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexible('completed'));
+
+
+            document.getElementById('flexAddRoomBtn').addEventListener('click', function() {
+                const inp = document.getElementById('flexNewRoomInput');
+                const name = (inp.value || '').trim();
+                if (!name) return;
+                const flex = appState.flexibleInspections;
+                if (!flex.rooms.includes(name)) {
+                    flex.rooms.push(name);
+                    flex.assignments[name] = {};
+                    flex.currentRoomIndex = flex.rooms.length - 1;
+                    saveDataToStorage();
+                    updateFlexCheckPage();
+                    renderFlexBarcodeRows();
+                    inp.value = '';
+                } else {
+                    showMessageModal('Duplicate Room', 'That room already exists.');
+                }
+            });
+
+            document.getElementById('flexCancelUpload').addEventListener('click', hideFlexFileUploadModal);
+    
+
+            // Drag and drop functionality
+            fileLabel.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                fileLabel.classList.add('drag-over');
+            });
+
+            fileLabel.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                fileLabel.classList.remove('drag-over');
+            });
+
+            fileLabel.addEventListener('drop', function(e) {
+                e.preventDefault();
+                fileLabel.classList.remove('drag-over');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileName.textContent = e.dataTransfer.files[0].name;
+                }
+            });
+        }
+
+        // Dropdown Editor Functions
+        function renderDropdownEditor() {
+            const editorList = document.getElementById('dropdownEditorList');
+            editorList.innerHTML = '';
+
+            const options = getCodeStatusOptions();
+            options.forEach((option, index) => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-editor-item';
+                item.innerHTML = `
+                    <input type="text" class="dropdown-editor-input" value="${option}" data-index="${index}">
+                    <button class="dropdown-editor-btn remove" data-index="${index}">Remove</button>
+                `;
+                editorList.appendChild(item);
+            });
+
+            // Add event listeners
+            editorList.querySelectorAll('.dropdown-editor-input').forEach(input => {
+                input.addEventListener('input', updateDropdownOption);
+            });
+
+            editorList.querySelectorAll('.dropdown-editor-btn.remove').forEach(btn => {
+                btn.addEventListener('click', removeDropdownOption);
+            });
+        }
+
+        function addDropdownOption() {
+            if (!appState.customStatusOptions || appState.customStatusOptions.length === 0) {
+                appState.customStatusOptions = [...defaultCodeStatusOptions];
+            }
+            appState.customStatusOptions.push('New Option');
+            saveDataToStorage();
+            renderDropdownEditor();
+        }
+
+        function updateDropdownOption(event) {
+            const index = parseInt(event.target.dataset.index);
+            const value = event.target.value;
+            
+            if (!appState.customStatusOptions || appState.customStatusOptions.length === 0) {
+                appState.customStatusOptions = [...defaultCodeStatusOptions];
+            }
+            
+            appState.customStatusOptions[index] = value;
+            saveDataToStorage();
+        }
+
+        function removeDropdownOption(event) {
+            const index = parseInt(event.target.dataset.index);
+            
+            if (!appState.customStatusOptions || appState.customStatusOptions.length === 0) {
+                appState.customStatusOptions = [...defaultCodeStatusOptions];
+            }
+            
+            appState.customStatusOptions.splice(index, 1);
+            saveDataToStorage();
+            renderDropdownEditor();
+        }
+
+        // Comment Dropdown Editor Functions
+        function renderCommentDropdownEditor() {
+            const editorList = document.getElementById('commentDropdownEditorList');
+            editorList.innerHTML = '';
+
+            const options = getCommentOptions();
+            options.forEach((option, index) => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-editor-item';
+                item.innerHTML = `
+                    <input type="text" class="dropdown-editor-input" value="${option}" data-index="${index}">
+                    <button class="dropdown-editor-btn remove-comment" data-index="${index}">Remove</button>
+                `;
+                editorList.appendChild(item);
+            });
+
+            // Add event listeners
+            editorList.querySelectorAll('.dropdown-editor-input').forEach(input => {
+                input.addEventListener('input', updateCommentDropdownOption);
+            });
+
+            editorList.querySelectorAll('.dropdown-editor-btn.remove-comment').forEach(btn => {
+                btn.addEventListener('click', removeCommentDropdownOption);
+            });
+        }
+
+        function addCommentDropdownOption() {
+            if (!appState.customCommentOptions || appState.customCommentOptions.length === 0) {
+                appState.customCommentOptions = [...defaultCommentOptions];
+            }
+            appState.customCommentOptions.push('New Comment');
+            saveDataToStorage();
+            renderCommentDropdownEditor();
+        }
+
+        function updateCommentDropdownOption(event) {
+            const index = parseInt(event.target.dataset.index);
+            const value = event.target.value;
+            
+            if (!appState.customCommentOptions || appState.customCommentOptions.length === 0) {
+                appState.customCommentOptions = [...defaultCommentOptions];
+            }
+            
+            appState.customCommentOptions[index] = value;
+            saveDataToStorage();
+        }
+
+        function removeCommentDropdownOption(event) {
+            const index = parseInt(event.target.dataset.index);
+            
+            if (!appState.customCommentOptions || appState.customCommentOptions.length === 0) {
+                appState.customCommentOptions = [...defaultCommentOptions];
+            }
+            
+            appState.customCommentOptions.splice(index, 1);
+            saveDataToStorage();
+            renderCommentDropdownEditor();
+        }
+
+
+        // Page navigation functions
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function showMainMenu() {
+            showPage('mainMenuPage');
+        }
+
+        function showRoomInputPage() {
+            showPage('roomInputPage');
+        }
+
+        function showCodeInputPage() {
+            showPage('codeInputPage');
+            renderDropdownEditor(); // Refresh status dropdown editor
+            renderCommentDropdownEditor(); // Refresh comment dropdown editor
+        }
+
+        function showFlexInputPage() { 
+            showPage('flexInputPage'); 
+        }
+
+        function showRoomSeStSvInputPage() {
+            showPage('roomSeStSvInputPage');
+        }
+
+        function showCheckPage() {
+            showPage('checkPage');
+        }
+
+        function showCodeCheckPage() {
+            showPage('codeCheckPage');
+        }
+
+        function showFlexCheckPage() { 
+            showPage('flexCheckPage'); 
+        }
+
+        function showRoomSeStSvCheckPage() {
+            showPage('roomSeStSvCheckPage');
+        }
+
+        function showCompletionPage_EA() {
+            showPage('completionPageEA');
+        }
+
+        function showCompletionPage_ECS() {
+            showPage('completionPageECS');
+        }
+
+        function showCompletionPage_SeSvSt() {
+            showPage('completionPageSeSvSt');
+        }
+
+        function showCompletionPage_Flexible() {
+            showPage('completionPageFlexible');
+        }
+
+        function backToSeStSvInput() {
+            appState.isInspectionMode = false;
+            saveDataToStorage();
+            showRoomSeStSvInputPage();
+        }
+
+        // Custom dropdown functionality
+        function setupCustomDropdown(dropdownId, onSelectCallback) {
+            const dropdown = document.getElementById(dropdownId);
+            const button = dropdown.querySelector('.custom-dropdown-button');
+            const optionsContainer = dropdown.querySelector('.custom-dropdown-options');
+            const textSpan = dropdown.querySelector('.custom-dropdown-text');
+
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = optionsContainer.classList.contains('show');
+                
+                // Close all other dropdowns
+                document.querySelectorAll('.custom-dropdown-options').forEach(opt => {
+                    opt.classList.remove('show');
+                });
+                document.querySelectorAll('.custom-dropdown-button').forEach(btn => {
+                    btn.classList.remove('open');
+                });
+
+                if (!isOpen) {
+                    optionsContainer.classList.add('show');
+                    button.classList.add('open');
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                optionsContainer.classList.remove('show');
+                button.classList.remove('open');
+            });
+        }
+
+        function updateCustomDropdownOptions(dropdownId, options, selectedIndex) {
+            const dropdown = document.getElementById(dropdownId);
+            const optionsContainer = dropdown.querySelector('.custom-dropdown-options');
+            const textSpan = dropdown.querySelector('.custom-dropdown-text');
+            
+            optionsContainer.innerHTML = '';
+            
+            options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'custom-dropdown-option';
+                if (index === selectedIndex) {
+                    optionDiv.classList.add('selected');
+                }
+                
+                // Add status indicator
+                const status = getRoomStatus(option);
+                const indicator = document.createElement('span');
+                indicator.className = `status-symbol ${status}`;
+                optionDiv.appendChild(indicator);
+                
+                const textNode = document.createTextNode(option);
+                optionDiv.appendChild(textNode);
+                
+                optionDiv.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const callback = dropdown.dataset.callback;
+                    if (dropdownId === 'roomSelect') {
+                        appState.currentRoomIndex = index;
+                        updateCheckPage();
+                        updateCheckStates();
+                    } else if (dropdownId === 'codeRoomSelect') {
+                        appState.currentCodeRoomIndex = index;
+                        updateCodeCheckPage();
+                        generateCodeCheckItems();
+                        updateCodeCheckStates();
+                    } else if (dropdownId === 'flexRoomSelect') {
+                        appState.flexibleInspections.currentRoomIndex = index;
+                        updateFlexCheckPage();
+                        renderFlexBarcodeRows();
+                    } else if (dropdownId === 'seStSvRoomSelect') {
+                        appState.currentSeStSvRoomIndex = index;
+                        updateSeStSvPage();
+                        generateSeStSvEntries();
+                    }
+                    saveDataToStorage();
+                    optionsContainer.classList.remove('show');
+                    dropdown.querySelector('.custom-dropdown-button').classList.remove('open');
+                });
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            if (options.length > 0 && selectedIndex >= 0 && selectedIndex < options.length) {
+                textSpan.textContent = options[selectedIndex];
+            }
+        }
+
+        // Data persistence functions
+        function saveDataToStorage() {
+            try {
+                localStorage.setItem('roomInspectionApp', JSON.stringify(appState));
+            } catch (error) {
+                console.error('Failed to save data:', error);
+            }
+        }
+
+        function loadDataFromStorage() {
+            try {
+                const saved = localStorage.getItem('roomInspectionApp');
+                if (saved) {
+                    const parsedData = JSON.parse(saved);
+                    appState = { ...appState, ...parsedData };
+                }
+            } catch (error) {
+                console.error('Failed to load data:', error);
+            }
+        }
+
+        function refreshUIFromState() {
+            if (appState.rooms.length > 0) {
+                roomListTextarea.value = appState.rooms.join('\n');
+                generateCheckItems();
+                showCheckPage();
+                updateCheckPage();
+                updateCheckStates();
+            } else if (Object.keys(appState.roomCodes).length > 0) {
+                // Reconstruct code list textarea
+                let codeText = '';
+                for (const room in appState.roomCodes) {
+                    if (appState.roomCodes[room].length > 0) {
+                        codeText += `${room}- ${appState.roomCodes[room].join(' ')}\n`;
+                    }
+                }
+                codeListTextarea.value = codeText;
+                generateCodeCheckItems();
+                showCodeCheckPage();
+                updateCodeCheckPage();
+                updateCodeCheckStates();
+            } else if (appState.flexibleInspections && (appState.flexibleInspections.rooms.length > 0 || appState.flexibleInspections.unassignedBarcodes.length > 0)) {
+                // Rehydrate flexible tracking UI
+                showFlexCheckPage();
+                updateFlexCheckPage();
+                renderFlexBarcodeRows();
+                updateFlexCounters();
+            } else if (appState.seStSvRooms.length > 0) {
+                roomNumbersTextarea.value = appState.seStSvRooms.join('\n');
+                showRoomSeStSvCheckPage();
+                updateSeStSvPage();
+                generateSeStSvEntries();
+            }
+        }
+
+        // Update check page
+        function updateCheckPage() {
+            if (appState.rooms.length === 0) return;
+            
+            const currentRoom = appState.rooms[appState.currentRoomIndex];
+            document.getElementById('currentRoomTitle').textContent = currentRoom;
+            
+            // Update progress info
+            document.getElementById('progressInfo').textContent = 
+                `Room ${appState.currentRoomIndex + 1} of ${appState.rooms.length}`;
+            
+            // Update progress bar
+            const progressPercent = ((appState.currentRoomIndex + 1) / appState.rooms.length) * 100;
+            document.getElementById('progressFill').style.width = `${progressPercent}%`;
+            
+            // Update room selector
+            updateRoomSelector();
+            
+            // Update room select color based on status
+            updateRoomSelectColor();
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevRoom');
+            const nextBtn = document.getElementById('nextRoom');
+            
+            prevBtn.disabled = appState.currentRoomIndex === 0;
+            
+            if (appState.currentRoomIndex === appState.rooms.length - 1) {
+                nextBtn.textContent = 'Complete';
+            } else {
+                nextBtn.textContent = 'Next Room';
+            }
+        }
+
+        function updateRoomSelector() {
+            updateCustomDropdownOptions('roomSelect', appState.rooms, appState.currentRoomIndex);
+        }
+
+        // Update code check page
+        function updateCodeCheckPage() {
+            const roomNames = Object.keys(appState.roomCodes);
+            if (roomNames.length === 0) return;
+            
+            const currentRoom = roomNames[appState.currentCodeRoomIndex];
+            document.getElementById('currentCodeRoomTitle').textContent = `Room: ${currentRoom}`;
+            
+            // Update progress info
+            document.getElementById('codeProgressInfo').textContent = 
+                `Room ${appState.currentCodeRoomIndex + 1} of ${roomNames.length}`;
+            
+            // Update progress bar
+            const progressPercent = ((appState.currentCodeRoomIndex + 1) / roomNames.length) * 100;
+            document.getElementById('codeProgressFill').style.width = `${progressPercent}%`;
+            
+            // Update room selector
+            updateCodeRoomSelector();
+            
+            // Update room select color based on status
+            updateCodeRoomSelectColor();
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevCodeRoom');
+            const nextBtn = document.getElementById('nextCodeRoom');
+            
+            prevBtn.disabled = appState.currentCodeRoomIndex === 0;
+            
+            if (appState.currentCodeRoomIndex === roomNames.length - 1) {
+                nextBtn.textContent = 'Complete';
+            } else {
+                nextBtn.textContent = 'Next Room';
+            }
+        }
+
+        function updateCodeRoomSelector() {
+            const roomNames = Object.keys(appState.roomCodes);
+            updateCustomDropdownOptions('codeRoomSelect', roomNames, appState.currentCodeRoomIndex);
+        }
+
+        // Update check button states for site inspection
+        function updateCheckStates() {
+            const currentRoom = appState.rooms[appState.currentRoomIndex];
+            const roomData = appState.checkData[currentRoom] || new Array(checkLabels.length).fill(null);
+
+            roomData.forEach((value, index) => {
+                const checkButtons = document.querySelectorAll(`[data-check="${index}"]`);
+                
+                checkButtons.forEach(btn => {
+                    if (btn.tagName === 'BUTTON') {
+                        btn.classList.remove('active');
+                        if (value !== null && parseInt(btn.dataset.value) === value) {
+                            btn.classList.add('active');
+                        }
+                    } else if (btn.tagName === 'TEXTAREA') {
+                        btn.value = value || '';
+                    }
+                });
+            });
+
+            // Update check item backgrounds
+            document.querySelectorAll('.check-item').forEach((item, index) => {
+                const value = roomData[index];
+                if (value === 1) {
+                    item.classList.add('checked');
+                } else {
+                    item.classList.remove('checked');
+                }
+            });
+        }
+
+        function getRoomStatus(roomName) {
+            if (appState.roomStatus[roomName] === 'no-access') {
+                return 'no-access';
+            } else if (appState.roomStatus[roomName] === 'completed') {
+                return 'completed';
+            } else {
+                return 'default';
+            }
+        }
+
+        function updateCustomDropdownColor(dropdownId, status) {
+            const dropdown = document.getElementById(dropdownId);
+            const button = dropdown.querySelector('.custom-dropdown-button');
+            button.className = 'custom-dropdown-button';
+            if (status === 'no-access') {
+                button.classList.add('no-access');
+            } else if (status === 'completed') {
+                button.classList.add('completed');
+            }
+        }
+
+        function updateRoomSelectColor() {
+            const currentRoom = appState.rooms[appState.currentRoomIndex];
+            if (currentRoom) {
+                const status = appState.roomStatus[currentRoom];
+                updateCustomDropdownColor('roomSelect', status);
+            }
+        }
+
+        function updateCodeRoomSelectColor() {
+            const currentRoom = Object.keys(appState.roomCodes)[appState.currentCodeRoomIndex];
+            if (currentRoom) {
+                const status = appState.roomStatus[currentRoom];
+                updateCustomDropdownColor('codeRoomSelect', status);
+            }
+        }
+
+        function updateSeStSvRoomSelectColor() {
+            const currentRoom = appState.seStSvRooms[appState.currentSeStSvRoomIndex];
+            if (currentRoom) {
+                const status = appState.roomStatus[currentRoom];
+                updateCustomDropdownColor('seStSvRoomSelect', status);
+            }
+        }
+
+        // Data loading and saving functions
+        function loadSavedData() {
+            const saved = localStorage.getItem('roomInspectionApp');
+            if (saved) {
+                showMessageModal('Data Loaded', 'Saved data has been loaded successfully!');
+                refreshUIFromState();
+            } else {
+                showMessageModal('No Saved Data', 'No saved data found.');
+            }
+        }
+
+        /**
+         * Unassigns a barcode from a room, removes its lock, and re-adds it to the
+         * unassigned pool while preserving the original sorted order.
+         * @param {string} bc - The barcode to unassign.
+         * @param {string} currentRoom - The room the barcode is being unassigned from.
+         */
+        function commitUnassign(bc, currentRoom) {
+            const flex = appState.flexibleInspections;
+
+            // Capture the ECS code before unassigning, so we can return it to the presets list if it becomes unused
+            let freedEcs = null;
+            if (flex.assignments[currentRoom] && flex.assignments[currentRoom][bc]) {
+                freedEcs = String(flex.assignments[currentRoom][bc]).trim();
+            }
+
+            // 1. Remove the barcode from the flex.assignments[currentRoom] object.
+            if (flex.assignments[currentRoom]) {
+                delete flex.assignments[currentRoom][bc];
+            }
+
+            // 2. Remove the lock from the flex.locks[currentRoom][bc] object.
+            if (flex.locks[currentRoom]) {
+                delete flex.locks[currentRoom][bc];
+            }
+
+            // 3. Add the barcode (bc) back into the flex.unassignedBarcodes array
+            //    at its original, sorted position.
+            const unassigned = flex.unassignedBarcodes || [];
+            
+            // Only re-add if it's not already in the unassigned pool (shouldn't happen, but safety check)
+            if (!unassigned.includes(bc)) {
+                // Find the correct insertion point to maintain the original sorted order
+                let insertIndex = unassigned.findIndex(existingBc => existingBc > bc);
+                
+                if (insertIndex === -1) {
+                    // If no existing barcode is greater, insert at the end
+                    unassigned.push(bc);
+                } else {
+                    // Insert at the found index
+                    unassigned.splice(insertIndex, 0, bc);
+                }
+                
+                // Update the state with the newly sorted array
+                flex.unassignedBarcodes = unassigned;
+            }
+
+            // 4. If we had an ECS code and it's no longer used anywhere, add it back to the presets
+            if (freedEcs) {
+                const remaining = findEcsAssignments(freedEcs, bc);
+                if (remaining.length === 0) {
+                    flex.ecsPresets = Array.isArray(flex.ecsPresets) ? flex.ecsPresets : [];
+                    const exists = flex.ecsPresets.some(code => String(code).trim().toLowerCase() === freedEcs.toLowerCase());
+                    if (!exists) {
+                        flex.ecsPresets.push(freedEcs);
+                        flex.ecsPresets.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+                    }
+                }
+            }
+
+            // 5. Save data and Rerender the barcode rows.
+            saveDataToStorage();
+            renderFlexBarcodeRows();
+        }
+
+        function downloadJsonData() {
+            try {
+                const dataStr = JSON.stringify(appState, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `room_inspection_data_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                showMessageModal('Export Successful', 'Data exported successfully!');
+            } catch (error) {
+                console.error('Export failed:', error);
+                showMessageModal('Export Failed', 'Failed to export data. Please try again.');
+            }
+        }
+
+        function backToInput() {
+            appState.isInspectionMode = false;
+            saveDataToStorage();
+            showRoomInputPage();
+        }
+
+        function backToCodeInput() {
+            appState.isInspectionMode = false;
+            saveDataToStorage();
+            showCodeInputPage();
+        }
+
+        // Start inspection functions
+        function startInspection() {
+            const roomText = roomListTextarea.value.trim();
+            if (!roomText) {
+                showMessageModal('Input Required', 'Please enter room names or numbers.');
+                return;
+            }
+
+            appState.rooms = roomText.split('\n').map(room => room.trim()).filter(room => room);
+            appState.currentRoomIndex = 0;
+            appState.checkData = {};
+            appState.isInspectionMode = true;
+
+            // Initialize check data for each room
+            appState.rooms.forEach(room => {
+                appState.checkData[room] = new Array(checkLabels.length).fill(null);
+            });
+
+            saveDataToStorage();
+            generateCheckItems();
+            showCheckPage();
+            updateCheckPage();
+        }
+
+        function startCodeInspection() {
+            const codeText = codeListTextarea.value.trim();
+            if (!codeText) {
+                showMessageModal('Input Required', 'Please enter room codes.');
+                return;
+            }
+
+            // Parse room codes with improved logic
+            appState.roomCodes = {};
+            const lines = codeText.split('\n').map(line => line.trim()).filter(line => line);
+            let currentRoom = null;
+            
+            lines.forEach(line => {
+                if (line.includes('-')) {
+                    // Line contains a room and codes
+                    const parts = line.split('-');
+                    if (parts.length >= 2) {
+                        const room = parts[0].trim();
+                        const codes = parts.slice(1).join('-').trim().split(/\s+/).filter(code => code);
+                        if (!appState.roomCodes[room]) {
+                            appState.roomCodes[room] = [];
+                        }
+                        appState.roomCodes[room] = appState.roomCodes[room].concat(codes);
+                        currentRoom = room; // Set this as the current room for subsequent codes
+                    }
+                } else {
+                    // Individual code without room association - assign to current room or unassigned
+                    if (currentRoom) {
+                        // Assign to the current room (the room above)
+                        if (!appState.roomCodes[currentRoom]) {
+                            appState.roomCodes[currentRoom] = [];
+                        }
+                        appState.roomCodes[currentRoom].push(line);
+                    } else {
+                        // No current room, assign to unassigned
+                        const room = 'Unassigned';
+                        if (!appState.roomCodes[room]) {
+                            appState.roomCodes[room] = [];
+                        }
+                        appState.roomCodes[room].push(line);
+                    }
+                }
+            });
+
+            appState.currentCodeRoomIndex = 0;
+            appState.checkData = {};
+            appState.codeSpecificComments = {};
+            appState.isInspectionMode = true;
+
+            // Initialize check data for each code
+            for (const room in appState.roomCodes) {
+                appState.roomCodes[room].forEach(code => {
+                    const uniqueCodeId = `${room}-${code}`;
+                    appState.checkData[uniqueCodeId] = null; // Store index of selected status
+                    appState.codeSpecificComments[uniqueCodeId] = '';
+                });
+            }
+
+            saveDataToStorage();
+            generateCodeCheckItems();
+            showCodeCheckPage();
+            updateCodeCheckPage();
+        }
+
+        function startSeStSvInspection() {
+            const roomText = roomNumbersTextarea.value.trim();
+            if (!roomText) {
+                showMessageModal('Input Required', 'Please enter room numbers.');
+                return;
+            }
+
+            appState.seStSvRooms = roomText.split('\n').map(room => room.trim()).filter(room => room);
+            appState.currentSeStSvRoomIndex = 0;
+            appState.seStSvData = {};
+            appState.isInspectionMode = true;
+
+            // Initialize SE/ST/SV data for each room
+            appState.seStSvRooms.forEach(room => {
+                appState.seStSvData[room] = {
+                    'SE': [],
+                    'ST': [],
+                    'SV': [],
+                    'Clamps': [] // Store clamp quantities for ST entries
+                };
+            });
+
+            saveDataToStorage();
+            showRoomSeStSvCheckPage();
+            updateSeStSvPage();
+            generateSeStSvEntries();
+        }
+
+        // Generate check items for site inspection
+        function generateCheckItems() {
+            const checksContainer = document.getElementById('checksContainer');
+            checksContainer.innerHTML = '';
+            
+            groupedCheckLabels.forEach(group => {
+                const groupHeader = document.createElement('h3');
+                groupHeader.textContent = group.group;
+                groupHeader.style.gridColumn = '1 / -1';
+                groupHeader.style.color = '#333';
+                checksContainer.appendChild(groupHeader);
+
+                group.questions.forEach((label) => {
+                    const checkIndex = checkLabels.indexOf(label);
+                    const checkItem = document.createElement('div');
+                    checkItem.className = 'check-item';
+
+                    if (label === 'Comments') {
+                        checkItem.innerHTML = `
+                            <div class="check-label">${label}</div>
+                            <textarea class="room-textarea" data-check="${checkIndex}" rows="3" placeholder="Add comments..."></textarea>
+                        `;
+                    } else {
+                        checkItem.innerHTML = `
+                            <div class="check-label">${label}</div>
+                            <div class="check-buttons">
+                                <button class="check-btn yes" data-check="${checkIndex}" data-value="1">Yes</button>
+                                <button class="check-btn no" data-check="${checkIndex}" data-value="0">No</button>
+                            </div>
+                        `;
+                    }
+
+                    checksContainer.appendChild(checkItem);
+                });
+            });
+
+            // Add event listeners
+            document.querySelectorAll('#checksContainer .check-btn').forEach(btn => {
+                btn.addEventListener('click', handleCheckClick);
+            });
+
+            document.querySelectorAll('#checksContainer textarea[data-check]').forEach(textarea => {
+                textarea.addEventListener('input', handleTextInput);
+            });
+        }
+
+        // Generate code check items for code inspection
+        function generateCodeCheckItems() {
+            const checksContainer = document.getElementById('codeChecksContainer');
+            checksContainer.innerHTML = '';
+
+            const currentRoomName = Object.keys(appState.roomCodes)[appState.currentCodeRoomIndex];
+            const codesForCurrentRoom = appState.roomCodes[currentRoomName] || [];
+
+            const codeStatusOptions = getCodeStatusOptions();
+            const commentOptions = getCommentOptions();
+
+            codesForCurrentRoom.forEach(code => {
+                const uniqueCodeId = `${currentRoomName}-${code}`;
+                
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'grid-row';
+
+                // Code cell
+                const codeCell = document.createElement('div');
+                codeCell.className = 'grid-cell code-cell';
+                codeCell.textContent = code;
+                rowDiv.appendChild(codeCell);
+
+                // Controls cell
+                const controlsCell = document.createElement('div');
+                controlsCell.className = 'grid-cell controls-cell';
+
+                // Controls row
+                const controlsRow = document.createElement('div');
+                controlsRow.className = 'controls-row';
+
+                // Status wrapper
+                const statusWrapper = document.createElement('div');
+                statusWrapper.className = 'control-wrapper';
+                statusWrapper.style.position = 'relative';
+                
+                const statusLabel = document.createElement('div');
+                statusLabel.className = 'control-label';
+                statusLabel.textContent = 'Status';
+                statusWrapper.appendChild(statusLabel);
+
+                const statusButton = document.createElement('button');
+                statusButton.className = 'status-button';
+                statusButton.textContent = 'Select Status';
+                statusButton.dataset.codeId = uniqueCodeId;
+                statusButton.addEventListener('click', toggleStatusOptions);
+                statusWrapper.appendChild(statusButton);
+
+                const statusOptions = document.createElement('div');
+                statusOptions.className = 'status-options';
+                statusOptions.dataset.codeId = uniqueCodeId;
+                
+                codeStatusOptions.forEach((status, index) => {
+                    const option = document.createElement('div');
+                    option.className = 'status-option';
+                    option.textContent = status;
+                    option.dataset.codeId = uniqueCodeId;
+                    option.dataset.statusIndex = index;
+                    option.addEventListener('click', selectCodeStatus);
+                    statusOptions.appendChild(option);
+                });
+                
+                statusWrapper.appendChild(statusOptions);
+                controlsRow.appendChild(statusWrapper);
+
+                // Comment wrapper
+                const commentWrapper = document.createElement('div');
+                commentWrapper.className = 'control-wrapper comment-section';
+                
+                const commentLabel = document.createElement('div');
+                commentLabel.className = 'control-label';
+                commentLabel.textContent = 'Comment';
+                commentWrapper.appendChild(commentLabel);
+
+                // Create dropdown for predefined choices
+                const commentSelect = document.createElement('select');
+                commentSelect.className = 'comment-textarea';
+                commentSelect.dataset.codeId = uniqueCodeId;
+                
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select comment...';
+                commentSelect.appendChild(defaultOption);
+                
+                // Add predefined choices
+                commentOptions.forEach(choice => {
+                    const option = document.createElement('option');
+                    option.value = choice;
+                    option.textContent = choice;
+                    commentSelect.appendChild(option);
+                });
+                
+                // Add "Custom" option
+                const customOption = document.createElement('option');
+                customOption.value = '__custom__';
+                customOption.textContent = 'Custom...';
+                commentSelect.appendChild(customOption);
+                
+                commentSelect.addEventListener('change', function(event) {
+                    const codeId = event.target.dataset.codeId;
+                    const selectedValue = event.target.value;
+                    
+                    if (selectedValue === '__custom__') {
+                        // Show custom input field
+                        if (customInput) {
+                            customInput.classList.add('show');
+                            customInput.focus();
+                        }
+                    } else {
+                        // Hide custom input field and save selected value
+                        if (customInput) {
+                            customInput.classList.remove('show');
+                            customInput.value = '';
+                        }
+                        appState.codeSpecificComments[codeId] = selectedValue;
+                        saveDataToStorage();
+                    }
+                });
+                
+                commentWrapper.appendChild(commentSelect);
+                
+                // Create custom input field
+                const customInput = document.createElement('textarea');
+                customInput.className = 'custom-comment-input';
+                customInput.dataset.codeId = uniqueCodeId;
+                customInput.placeholder = 'Enter your custom comment here...';
+                customInput.rows = 2;
+                
+                customInput.addEventListener('input', function(event) {
+                    const codeId = event.target.dataset.codeId;
+                    const value = event.target.value;
+                    appState.codeSpecificComments[codeId] = value;
+                    saveDataToStorage();
+                });
+                
+                commentWrapper.appendChild(customInput);
+                controlsRow.appendChild(commentWrapper);
+
+                controlsCell.appendChild(controlsRow);
+                rowDiv.appendChild(controlsCell);
+
+                checksContainer.appendChild(rowDiv);
+            });
+        }
+
+        // Event handlers
+        function handleCheckClick(event) {
+            const checkIndex = parseInt(event.target.dataset.check);
+            const value = parseInt(event.target.dataset.value);
+            const currentRoom = appState.rooms[appState.currentRoomIndex];
+            
+            if (!appState.checkData[currentRoom]) {
+                appState.checkData[currentRoom] = new Array(checkLabels.length).fill(null);
+            }
+            
+            appState.checkData[currentRoom][checkIndex] = value;
+            saveDataToStorage();
+            updateCheckStates();
+        }
+
+        function handleTextInput(event) {
+            const checkIndex = parseInt(event.target.dataset.check);
+            const value = event.target.value;
+            const currentRoom = appState.rooms[appState.currentRoomIndex];
+            
+            if (!appState.checkData[currentRoom]) {
+                appState.checkData[currentRoom] = new Array(checkLabels.length).fill(null);
+            }
+            
+            appState.checkData[currentRoom][checkIndex] = value;
+            saveDataToStorage();
+        }
+
+        function toggleStatusOptions(event) {
+            event.stopPropagation();
+            const codeId = event.target.dataset.codeId;
+            const statusOptions = document.querySelector(`.status-options[data-code-id="${codeId}"]`);
+            
+            // Close all other status options
+            document.querySelectorAll('.status-options').forEach(options => {
+                if (options !== statusOptions) {
+                    options.classList.remove('active');
+                }
+            });
+            
+            statusOptions.classList.toggle('active');
+        }
+
+        function selectCodeStatus(event) {
+            const codeId = event.target.dataset.codeId;
+            const statusIndex = parseInt(event.target.dataset.statusIndex);
+            const statusText = event.target.textContent;
+            
+            appState.checkData[codeId] = statusIndex;
+            
+            const statusButton = document.querySelector(`.status-button[data-code-id="${codeId}"]`);
+            statusButton.textContent = statusText;
+            statusButton.classList.add('selected');
+            
+            const statusOptions = document.querySelector(`.status-options[data-code-id="${codeId}"]`);
+            statusOptions.classList.remove('active');
+            
+            saveDataToStorage();
+        }
+
+        // Close status options when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.status-options').forEach(options => {
+                options.classList.remove('active');
+            });
+        });
+
+        // Room status functions
+        function setRoomStatus(status) {
+            const currentRoom = appState.rooms[appState.currentRoomIndex];
+            if (currentRoom) {
+                appState.roomStatus[currentRoom] = status;
+                saveDataToStorage();
+                updateRoomSelectColor();
+                updateCustomDropdownOptions('roomSelect', appState.rooms, appState.currentRoomIndex);
+            }
+        }
+
+        function setCodeRoomStatus(status) {
+            const currentRoom = Object.keys(appState.roomCodes)[appState.currentCodeRoomIndex];
+            if (currentRoom) {
+                appState.roomStatus[currentRoom] = status;
+                saveDataToStorage();
+                updateCodeRoomSelectColor();
+                updateCustomDropdownOptions('codeRoomSelect', Object.keys(appState.roomCodes), appState.currentCodeRoomIndex);
+            }
+        }
+
+        function setSeStSvRoomStatus(status) {
+            const currentRoom = appState.seStSvRooms[appState.currentSeStSvRoomIndex];
+            if (currentRoom) {
+                appState.roomStatus[currentRoom] = status;
+                saveDataToStorage();
+                updateSeStSvRoomSelectColor();
+                updateCustomDropdownOptions('seStSvRoomSelect', appState.seStSvRooms, appState.currentSeStSvRoomIndex);
+            }
+        }
+
+        // Update code check button states and comments for code inspection
+        function updateCodeCheckStates() {
+            const currentRoomName = Object.keys(appState.roomCodes)[appState.currentCodeRoomIndex];
+            const codesForCurrentRoom = appState.roomCodes[currentRoomName] || [];
+            const codeStatusOptions = getCodeStatusOptions();
+            const commentOptions = getCommentOptions();
+
+
+            codesForCurrentRoom.forEach(code => {
+                const uniqueCodeId = `${currentRoomName}-${code}`;
+                const statusIndex = appState.checkData[uniqueCodeId];
+                const comment = appState.codeSpecificComments[uniqueCodeId] || '';
+
+                // Update status button
+                const statusButton = document.querySelector(`.status-button[data-code-id="${uniqueCodeId}"]`);
+                if (statusButton) {
+                    if (statusIndex !== null && statusIndex !== undefined) {
+                        statusButton.textContent = codeStatusOptions[statusIndex];
+                        statusButton.classList.add('selected');
+                    } else {
+                        statusButton.textContent = 'Select Status';
+                        statusButton.classList.remove('selected');
+                    }
+                }
+
+                // Update comment dropdown and custom input
+                const commentSelect = document.querySelector(`.comment-textarea[data-code-id="${uniqueCodeId}"]`);
+                const customInput = document.querySelector(`.custom-comment-input[data-code-id="${uniqueCodeId}"]`);
+                
+                if (commentSelect && customInput) {
+                    // Check if the comment matches any predefined choice
+                    const matchingChoice = commentOptions.find(choice => choice === comment);
+                    
+                    if (matchingChoice) {
+                        // Set dropdown to the matching choice
+                        commentSelect.value = matchingChoice;
+                        customInput.classList.remove('show');
+                        customInput.value = '';
+                    } else if (comment) {
+                        // Set dropdown to "Custom" and show custom input with the value
+                        commentSelect.value = '__custom__';
+                        customInput.classList.add('show');
+                        customInput.value = comment;
+                    } else {
+                        // No comment selected
+                        commentSelect.value = '';
+                        customInput.classList.remove('show');
+                        customInput.value = '';
+                    }
+                }
+            });
+        }
+
+        function updateSeStSvPage() {
+            if (appState.seStSvRooms.length === 0) return;
+            
+            const currentRoom = appState.seStSvRooms[appState.currentSeStSvRoomIndex];
+            document.getElementById('currentSeStSvRoomTitle').textContent = `Room: ${currentRoom}`;
+            
+            // Update progress info
+            document.getElementById('seStSvProgressInfo').textContent = 
+                `Room ${appState.currentSeStSvRoomIndex + 1} of ${appState.seStSvRooms.length}`;
+            
+            // Update progress bar
+            const progressPercent = ((appState.currentSeStSvRoomIndex + 1) / appState.seStSvRooms.length) * 100;
+            document.getElementById('seStSvProgressFill').style.width = `${progressPercent}%`;
+            
+            // Update room selector
+            updateSeStSvRoomSelector();
+            
+            // Update room select color based on status
+            updateSeStSvRoomSelectColor();
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevSeStSvRoom');
+            const nextBtn = document.getElementById('nextSeStSvRoom');
+            
+            prevBtn.disabled = appState.currentSeStSvRoomIndex === 0;
+            
+            if (appState.currentSeStSvRoomIndex === appState.seStSvRooms.length - 1) {
+                nextBtn.style.display = 'none'; // Hide the button when at last room
+            } else {
+                nextBtn.style.display = 'block'; // Show the button when not at last room
+                nextBtn.textContent = 'Next Room';
+            }
+        }
+
+        function updateSeStSvRoomSelector() {
+            updateCustomDropdownOptions('seStSvRoomSelect', appState.seStSvRooms, appState.currentSeStSvRoomIndex);
+        }
+
+        function generateSeStSvEntries() {
+            if (appState.seStSvRooms.length === 0) return;
+            
+            const currentRoom = appState.seStSvRooms[appState.currentSeStSvRoomIndex];
+            const currentData = appState.seStSvData[currentRoom];
+
+            const seTextarea = document.getElementById("seTextarea");
+            const stTextarea = document.getElementById("stTextarea");
+            const svTextarea = document.getElementById("svTextarea");
+
+            seTextarea.value = currentData["SE"].join("\n");
+            
+            // For ST, reconstruct the display format with clamp quantities
+            const stDisplayValues = [];
+            for (let i = 0; i < currentData["ST"].length; i++) {
+                const stCode = currentData["ST"][i];
+                const clampQty = currentData["Clamps"] && currentData["Clamps"][i] ? currentData["Clamps"][i] : '';
+                if (clampQty) {
+                    stDisplayValues.push(`${stCode}-${clampQty}`);
+                } else {
+                    stDisplayValues.push(stCode);
+                }
+            }
+            stTextarea.value = stDisplayValues.join("\n");
+            
+            svTextarea.value = currentData["SV"].join("\n");
+
+            // Add event listeners to update appState on input
+            seTextarea.oninput = (e) => handleSeStSvTextareaInput("SE", e.target.value);
+            stTextarea.oninput = (e) => handleSeStSvTextareaInput("ST", e.target.value);
+            svTextarea.oninput = (e) => handleSeStSvTextareaInput("SV", e.target.value);
+            
+            updateSeStSvCounters();
+        }
+
+        // Helper function to check if a code is a whole room number
+        function isWholeRoomNumber(code) {
+            // Check if the code contains 'SE', 'ST', or 'SV' which indicates it's a whole room number
+            return code.includes('SE') || code.includes('ST') || code.includes('SV');
+        }
+
+        function handleSeStSvTextareaInput(type, value) {
+            const currentRoom = appState.seStSvRooms[appState.currentSeStSvRoomIndex];
+            
+            if (type === 'ST') {
+                const stEntries = value.split("\n").map(line => line.trim()).filter(line => line);
+                const stCodes = [];
+                const clampQuantities = [];
+                
+                stEntries.forEach(entry => {
+                    const parts = entry.split('-');
+                    const code = parts[0].trim();
+                    const clampQty = parts.length > 1 ? parts.slice(1).join('-').trim() : '';
+                    stCodes.push(code);
+                    clampQuantities.push(clampQty);
+                });
+                
+                appState.seStSvData[currentRoom]["ST"] = stCodes;
+                appState.seStSvData[currentRoom]["Clamps"] = clampQuantities;
+            } else {
+                appState.seStSvData[currentRoom][type] = value.split("\n").map(line => line.trim()).filter(line => line);
+            }
+            
+            saveDataToStorage();
+            updateSeStSvCounters();
+        }
+
+        function updateSeStSvCounters() {
+            const seTextarea = document.getElementById("seTextarea");
+            const stTextarea = document.getElementById("stTextarea");
+            const svTextarea = document.getElementById("svTextarea");
+
+            const seCountSpan = document.getElementById("seCount");
+            const stCountSpan = document.getElementById("stCount");
+            const svCountSpan = document.getElementById("svCount");
+
+            const seLines = seTextarea.value.split('\n').filter(line => line.trim() !== '').length;
+            const stLines = stTextarea.value.split('\n').filter(line => line.trim() !== '').length;
+            const svLines = svTextarea.value.split('\n').filter(line => line.trim() !== '').length;
+
+            seCountSpan.textContent = seLines;
+            stCountSpan.textContent = stLines;
+            svCountSpan.textContent = svLines;
+
+            seCountSpan.style.display = seLines > 1 ? 'block' : 'none';
+            stCountSpan.style.display = stLines > 1 ? 'block' : 'none';
+            svCountSpan.style.display = svLines > 1 ? 'block' : 'none';
+        }
+
+
+        // Navigation functions
+        function navigateRoom(direction) {
+            const newIndex = appState.currentRoomIndex + direction;
+            
+            if (newIndex >= 0 && newIndex < appState.rooms.length) {
+                appState.currentRoomIndex = newIndex;
+                updateCheckPage();
+                updateCheckStates();
+                saveDataToStorage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (newIndex >= appState.rooms.length) {
+                showCompletionPage_EA();
+            }
+        }
+
+        function navigateCodeRoom(direction) {
+            const roomNames = Object.keys(appState.roomCodes);
+            const newIndex = appState.currentCodeRoomIndex + direction;
+            
+            if (newIndex >= 0 && newIndex < roomNames.length) {
+                appState.currentCodeRoomIndex = newIndex;
+                updateCodeCheckPage();
+                generateCodeCheckItems();
+                updateCodeCheckStates();
+                saveDataToStorage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (newIndex >= roomNames.length) {
+                showCompletionPage_ECS();
+            }
+        }
+
+        function navigateSeStSvRoom(direction) {
+            const newIndex = appState.currentSeStSvRoomIndex + direction;
+            
+            if (newIndex >= 0 && newIndex < appState.seStSvRooms.length) {
+                appState.currentSeStSvRoomIndex = newIndex;
+                updateSeStSvPage();
+                generateSeStSvEntries();
+                saveDataToStorage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (newIndex >= appState.seStSvRooms.length) {
+                showCompletionPage_SeSvSt();
+            }
+        }
+
+        // Export functions
+        function exportToCsv() {
+            try {
+                let csvContent = 'Room,';
+                csvContent += checkLabels.join(',') + '\n';
+                
+                appState.rooms.forEach(room => {
+                    csvContent += `"${room}",`;
+                    const roomData = appState.checkData[room] || new Array(checkLabels.length).fill('');
+                    csvContent += roomData.map(val => {
+                        if (val === null || val === undefined) return '';
+                        if (typeof val === 'string') return `"${val.replace(/"/g, '""')}"`;
+                        return val;
+                    }).join(',') + '\n';
+                });
+                
+                downloadCsvFile(csvContent, `room_inspection_${new Date().toISOString().split('T')[0]}.csv`);
+            } catch (error) {
+                console.error('Export failed:', error);
+                showMessageModal('Export Failed', 'Failed to export data. Please try again.');
+            }
+        }
+
+        function exportCodeToCsv() {
+            try {
+                const codeStatusOptions = getCodeStatusOptions();
+                let csvContent = 'Room,Code,Status,Comment\n';
+                
+                for (const room in appState.roomCodes) {
+                    appState.roomCodes[room].forEach(code => {
+                        const uniqueCodeId = `${room}-${code}`;
+                        const statusIndex = appState.checkData[uniqueCodeId];
+                        const status = (statusIndex !== null && statusIndex !== undefined) ? codeStatusOptions[statusIndex] : '';
+                        const comment = appState.codeSpecificComments[uniqueCodeId] || '';
+                        
+                        csvContent += `"${room}","${code}","${status}","${comment.replace(/"/g, '""')}"\n`;
+                    });
+                }
+                
+                downloadCsvFile(csvContent, `code_inspection_${new Date().toISOString().split('T')[0]}.csv`);
+            } catch (error) {
+                console.error('Export failed:', error);
+                showMessageModal('Export Failed', 'Failed to export data. Please try again.');
+            }
+        }
+
+        function exportSeStSvToCsv() {
+            try {
+                let csvContent = 'Room,SE,ST,SV\n';
+                
+                appState.seStSvRooms.forEach(room => {
+                    const data = appState.seStSvData[room];
+                    const maxLength = Math.max(
+                        data.SE.length,
+                        data.ST.length,
+                        data.SV.length
+                    );
+                    
+                    for (let i = 0; i < maxLength; i++) {
+                        const se = data.SE[i] || '';
+                        const st = data.ST[i] || '';
+                        const sv = data.SV[i] || '';
+                        const clamp = data.Clamps && data.Clamps[i] ? data.Clamps[i] : '';
+                        
+                        const stWithClamp = clamp ? `${st}-${clamp}` : st;
+                        
+                        csvContent += `"${i === 0 ? room : ''}","${se}","${stWithClamp}","${sv}"\n`;
+                    }
+                });
+                
+                downloadCsvFile(csvContent, `se_st_sv_inspection_${new Date().toISOString().split('T')[0]}.csv`);
+            } catch (error) {
+                console.error('Export failed:', error);
+                showMessageModal('Export Failed', 'Failed to export data. Please try again.');
+            }
+        }
+
+        function downloadCsvFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showMessageModal('Export Successful', 'Data exported successfully!');
+        }
+
+        // Modal functions
+        function showResetModal(type) {
+            document.getElementById('resetModal').classList.add('active');
+            document.getElementById('resetModal').dataset.type = type;
+        }
+
+        function hideResetModal() {
+            document.getElementById('resetModal').classList.remove('active');
+        }
+
+        function confirmReset() {
+            const type = document.getElementById('resetModal').dataset.type;
+            
+            if (type === 'site') {
+                appState.rooms = [];
+                appState.checkData = {};
+                appState.roomStatus = {};
+                roomListTextarea.value = '';
+            } else if (type === 'code') {
+                appState.roomCodes = {};
+                appState.codeSpecificComments = {};
+                codeListTextarea.value = '';
+            } else if (type === 'flex') {
+                appState.flexibleInspections = {
+                    rooms: [], currentRoomIndex: 0, unassignedBarcodes: [], assignments: {}, inspections: [], ecsPresets: [], locks: {}, poolVisibleCount: 10, isFlexibleMode: false
+                };
+                if (typeof flexRoomListTextarea !== 'undefined') flexRoomListTextarea.value = '';
+                if (typeof flexBarcodeListTextarea !== 'undefined') flexBarcodeListTextarea.value = '';
+            } else if (type === 'seStSv') {
+                appState.seStSvRooms = [];
+                appState.seStSvData = {};
+                roomNumbersTextarea.value = '';
+            }
+            
+            appState.currentRoomIndex = 0;
+            appState.currentCodeRoomIndex = 0;
+            appState.currentSeStSvRoomIndex = 0;
+            appState.isInspectionMode = false;
+            
+            localStorage.removeItem('roomInspectionApp');
+            hideResetModal();
+            showMainMenu();
+            showMessageModal('Reset Complete', 'Application has been reset successfully.');
+        }
+
+        function showFileUploadModal() {
+            document.getElementById('fileUploadModal').classList.add('active');
+            document.getElementById('fileName').textContent = '';
+            document.getElementById('jsonFileInput').value = '';
+        }
+
+        function hideFileUploadModal() {
+            document.getElementById('fileUploadModal').classList.remove('active');
+        }
+
+        function uploadFile() {
+            const fileInput = document.getElementById('jsonFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showMessageModal('No File Selected', 'Please select a JSON file to upload.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    // Reset state before loading new data to ensure a clean slate
+                    appState = {
+                        rooms: [],
+                        currentRoomIndex: 0,
+                        checkData: {},
+                        roomStatus: {},
+                        isInspectionMode: false,
+                        roomCodes: {},
+                        currentCodeRoomIndex: 0,
+                        codeSpecificComments: {},
+                        seStSvRooms: [],
+                        currentSeStSvRoomIndex: 0,
+                        seStSvData: {},
+                        customStatusOptions: [],
+                        customCommentOptions: [],
+                        ...data
+                    };
+                    saveDataToStorage();
+                    hideFileUploadModal();
+                    refreshUIFromState();
+                    renderDropdownEditor(); // Refresh status dropdown editor after import
+                    renderCommentDropdownEditor(); // Refresh comment dropdown editor after import
+                    showMessageModal('Upload Successful', 'Data uploaded and loaded successfully!');
+                } catch (error) {
+                    console.error('Upload failed:', error);
+                    showMessageModal('Upload Failed', 'Invalid JSON file. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Global variable to hold the confirmation callback
+        let confirmationCallback = null;
+
+        /**
+         * Shows a message modal. Can be a simple alert or a confirmation dialog.
+         * @param {string} title - The title of the modal.
+         * @param {string} message - The message content.
+         * @param {function} [onConfirm=null] - Callback function to run on confirmation. If null, shows a single OK button.
+         * @param {string} [confirmText='Accept with Suffix'] - Text for the confirmation button.
+         * @param {string} [cancelText='Cancel'] - Text for the cancel button.
+         */
+        function showMessageModal(title, message, onConfirm = null, confirmText = 'Accept with Suffix', cancelText = 'Cancel') {
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageContent').textContent = message;
+            
+            const okBtn = document.getElementById('messageOk');
+            const confirmBtn = document.getElementById('messageConfirm');
+            const cancelBtn = document.getElementById('messageCancel');
+
+            if (onConfirm) {
+                // Confirmation mode
+                okBtn.style.display = 'none';
+                confirmBtn.style.display = 'inline-block';
+                cancelBtn.style.display = 'inline-block';
+                confirmBtn.textContent = confirmText;
+                cancelBtn.textContent = cancelText;
+                confirmationCallback = onConfirm;
+            } else {
+                // Simple message mode
+                okBtn.style.display = 'inline-block';
+                confirmBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+                confirmationCallback = null;
+            }
+            
+            document.getElementById('messageModal').classList.add('active');
+        }
+
+        function hideMessageModal() {
+            document.getElementById('messageModal').classList.remove('active');
+            confirmationCallback = null; // Clear callback
+        }
+
+        // Attach event listeners for the new buttons
+        document.getElementById('messageOk').addEventListener('click', hideMessageModal);
+        document.getElementById('messageCancel').addEventListener('click', hideMessageModal);
+        document.getElementById('messageConfirm').addEventListener('click', () => {
+            if (confirmationCallback) {
+                confirmationCallback();
+            }
+            hideMessageModal();
+        });
+
+        // ===== Flexible Tracking Logic =====
+        function startFlexibleInspection() {
+            const roomsText = (typeof flexRoomListTextarea !== 'undefined' && flexRoomListTextarea ? flexRoomListTextarea.value : '').trim();
+            const barcodesText = (typeof flexBarcodeListTextarea !== 'undefined' && flexBarcodeListTextarea ? flexBarcodeListTextarea.value : '').trim();
+
+            if (!barcodesText) {
+                showMessageModal('Input Required', 'Please enter at least one barcode.');
+                return;
+            }
+
+            const ecsText = (typeof flexEcsCodeListTextarea !== 'undefined' && flexEcsCodeListTextarea ? flexEcsCodeListTextarea.value : '').trim();
+            let ecsPresets = ecsText ? ecsText.split('\n').map(s => s.trim()).filter(Boolean) : [];
+            if (ecsPresets.length) {
+                const seen = new Set();
+                ecsPresets = ecsPresets.filter(code => {
+                    const key = String(code).trim().toLowerCase();
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            }
+
+            const rooms = roomsText ? roomsText.split('\n').map(s => s.trim()).filter(Boolean) : [];
+            const barcodes = barcodesText.split('\n').map(s => s.trim()).filter(Boolean);
+
+            if (!rooms.length) { showMessageModal('Input Required', 'Please enter at least one room before starting.'); return; }
+            appState.flexibleInspections.rooms = rooms;
+            appState.flexibleInspections.currentRoomIndex = 0;
+            appState.flexibleInspections.unassignedBarcodes = barcodes;
+            appState.flexibleInspections.poolVisibleCount = 10;
+            appState.flexibleInspections.assignments = {}; // reset
+            appState.flexibleInspections.locks = {};
+            appState.flexibleInspections.ecsPresets = ecsPresets;
+            appState.flexibleInspections.isFlexibleMode = true;
+            appState.isInspectionMode = true;
+            
+            // init assignments map per room
+            appState.flexibleInspections.rooms.forEach(r => {
+                appState.flexibleInspections.assignments[r] = {}; // barcode -> ecsCode
+            });
+
+            saveDataToStorage();
+            showFlexCheckPage();
+            updateFlexCheckPage();
+            renderFlexBarcodeRows();
+            updateFlexCounters();
+        }
+
+
+        function setFlexibleRoomStatus(status) {
+            const flex = appState.flexibleInspections;
+            const rooms = flex.rooms || [];
+            const currentRoom = rooms[flex.currentRoomIndex];
+            if (!currentRoom) return;
+            // Reuse global roomStatus for consistency across modes
+            appState.roomStatus = appState.roomStatus || {};
+            appState.roomStatus[currentRoom] = status;
+            saveDataToStorage();
+            updateFlexibleRoomSelectColor();
+        }
+        function updateFlexibleRoomSelectColor() {
+            const flex = appState.flexibleInspections;
+            const rooms = flex.rooms || [];
+            const currentRoom = rooms[flex.currentRoomIndex];
+            if (!currentRoom) return;
+            const status = (appState.roomStatus || {})[currentRoom];
+            updateCustomDropdownColor('flexRoomSelect', status);
+        }
+
+        function updateFlexCheckPage() {
+            const flex = appState.flexibleInspections;
+            if (!flex) return;
+            const rooms = flex.rooms || [];
+            if (!rooms.length) return;
+
+            const currentRoom = rooms[flex.currentRoomIndex];
+            document.getElementById('flexCurrentRoomTitle').textContent = `Room: ${currentRoom}`;
+
+            document.getElementById('flexProgressInfo').textContent = `Room ${flex.currentRoomIndex + 1} of ${rooms.length}`;
+            const pct = ((flex.currentRoomIndex + 1) / rooms.length) * 100;
+            document.getElementById('flexProgressFill').style.width = pct + '%';
+
+            updateCustomDropdownOptions('flexRoomSelect', rooms, flex.currentRoomIndex);
+            updateFlexibleRoomSelectColor();
+
+            const prevBtn = document.getElementById('flexPrevRoom');
+            const nextBtn = document.getElementById('flexNextRoom');
+            prevBtn.disabled = flex.currentRoomIndex === 0;
+            nextBtn.textContent = flex.currentRoomIndex === rooms.length - 1 ? 'Complete' : 'Next Room';
+
+            updateFlexCounters();
+        }
+
+
+// Helper to ensure an ECS code is unique across ALL barcodes in ALL rooms
+// Helper to find all existing assignments for an ECS code
+
+// Global counters updater for Asset Tagz (flexible tracking)
+function updateFlexCounters() {
+    const totalEl = document.getElementById('flexTotalBarcodes');
+    const assignedEl = document.getElementById('flexAssignedBarcodes');
+    if (!totalEl || !assignedEl) return;
+
+    const flex = appState.flexibleInspections || {};
+    const rooms = flex.rooms || [];
+    let assignedCount = 0;
+
+    rooms.forEach(room => {
+        const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+        assignedCount += Object.keys(map).length;
+    });
+
+    const unassignedCount = (flex.unassignedBarcodes || []).length;
+
+    // Available goes down as Assigned goes up
+    const available = unassignedCount;
+    const assigned = assignedCount;
+
+    totalEl.textContent = available;
+    assignedEl.textContent = assigned;
+}
+
+function findEcsAssignments(ecsCode, excludeBarcode = null) {
+    const flex = appState.flexibleInspections || {};
+    const rooms = (flex.rooms || []);
+    const ecs = (ecsCode || '').trim().toLowerCase();
+    if (!ecs) return [];
+    
+    const assignments = [];
+    for (const room of rooms) {
+        const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+        for (const [bc, code] of Object.entries(map)) {
+            if (!code) continue;
+            if (excludeBarcode && bc === excludeBarcode) continue;
+            if (String(code).trim().toLowerCase() === ecs) {
+                assignments.push({ room: room, barcode: bc, ecsCode: code });
+            }
+        }
+    }
+    return assignments;
+}
+
+// Helper to check if an ECS code exists (for backward compatibility)
+function ecsCodeExists(ecsCode, excludeBarcode = null) {
+    return findEcsAssignments(ecsCode, excludeBarcode).length > 0;
+}
+
+        
+function renderFlexBarcodeRows() {
+    const flex = appState.flexibleInspections;
+    const container = document.getElementById('flexBarcodeContainer');
+    container.innerHTML = '';
+
+    const rooms = flex.rooms || [];
+    const currentRoom = rooms[flex.currentRoomIndex];
+
+    // Prepare ECS presets datalist with only unused codes
+    let ecsPresets = Array.isArray(flex.ecsPresets) ? flex.ecsPresets : [];
+    if (ecsPresets.length) {
+        const used = new Set();
+        const allRooms = flex.rooms || [];
+        allRooms.forEach(room => {
+            const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+            Object.values(map).forEach(code => {
+                if (!code) return;
+                used.add(String(code).trim().toLowerCase());
+            });
+        });
+        ecsPresets = ecsPresets.filter(code => !used.has(String(code).trim().toLowerCase()));
+    }
+    flex.ecsPresets = ecsPresets;
+
+    let ecsPresetListId = null;
+    let ecsDatalist = document.getElementById('flexEcsPresetsList');
+    if (ecsPresets.length) {
+        if (!ecsDatalist) {
+            ecsDatalist = document.createElement('datalist');
+            ecsDatalist.id = 'flexEcsPresetsList';
+            document.body.appendChild(ecsDatalist);
+        }
+        ecsDatalist.innerHTML = '';
+        ecsPresets.forEach(code => {
+            const opt = document.createElement('option');
+            opt.value = code;
+            ecsDatalist.appendChild(opt);
+        });
+        ecsPresetListId = ecsDatalist.id;
+    } else if (ecsDatalist) {
+        ecsDatalist.innerHTML = '';
+        ecsPresetListId = ecsDatalist.id;
+    }
+
+// --- ASSIGNED TO CURRENT ROOM ---
+    const assignedMap = (flex.assignments[currentRoom] || {});
+    const assignedBcs = Object.keys(assignedMap);
+    if (assignedBcs.length) {
+        const assignedHeader = document.createElement('div');
+        assignedHeader.className = 'section-subtitle';
+        assignedHeader.textContent = 'Assigned to this room';
+        container.appendChild(assignedHeader);
+
+        assignedBcs.forEach(bc => {
+            const row = document.createElement('div');
+            row.className = 'grid-row';
+
+            const codeCell = document.createElement('div');
+            codeCell.className = 'grid-cell code-cell';
+            codeCell.textContent = bc;
+            row.appendChild(codeCell);
+
+            const controlsCell = document.createElement('div');
+            controlsCell.className = 'grid-cell controls-cell';
+
+            const controlsRow = document.createElement('div');
+            controlsRow.className = 'controls-row';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'control-wrapper';
+            const label = document.createElement('div');
+            label.className = 'control-label';
+            label.textContent = 'ECS Code';
+            wrapper.appendChild(label);
+
+            // ECS input row with padlock BEFORE the input
+            const ecsWrap = document.createElement('div');
+            ecsWrap.style.display = 'flex';
+            ecsWrap.style.alignItems = 'center';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'entry-input';
+            input.placeholder = 'Enter ECS code...';
+            input.value = assignedMap[bc] || '';
+            input.dataset.barcode = bc;
+            if (ecsPresetListId) {
+                input.setAttribute('list', ecsPresetListId);
+            }
+
+            // padlock icon (left)
+            const lockBtn = document.createElement('button');
+            lockBtn.className = 'button lock-btn';
+            lockBtn.style.marginRight = '8px';
+            const lockIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            lockIcon.setAttribute("viewBox", "0 0 24 24");
+            lockIcon.innerHTML = '<path d="M12 1a5 5 0 0 0-5 5v4H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V12a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 9V6a3 3 0 0 1 6 0v4H9z"/>';
+            lockBtn.appendChild(lockIcon);
+            lockBtn.title = 'Unlock to edit';
+
+            // ensure locks map exists
+            flex.locks = flex.locks || {};
+            flex.locks[currentRoom] = flex.locks[currentRoom] || {};
+
+            const applyLockState = () => {
+                const hasVal = (input.value || '').trim().length > 0;
+                // Show padlock only when there is a value
+                lockBtn.style.display = hasVal ? '' : 'none';
+                if (hasVal && flex.locks[currentRoom][bc]) {
+                    input.readOnly = true;
+                    lockBtn.classList.add('locked'); lockBtn.classList.remove('unlocked');
+                    lockBtn.title = 'Locked';
+                } else {
+                    input.readOnly = false;
+                    lockBtn.classList.add('unlocked'); lockBtn.classList.remove('locked');
+                    lockBtn.title = 'Unlock to edit';
+                }
+            };
+
+            // Clicking the lock toggles ONLY if there is a value
+            let lastClickTime = 0;
+            
+            lockBtn.addEventListener('click', () => {
+                const hasVal = (input.value || '').trim().length > 0;
+                if (!hasVal) return;
+            
+                const current = !!flex.locks[currentRoom][bc];
+                const now = Date.now();
+            
+                if (current) {
+                    // Unlock only if double-clicked within 400ms
+                    if (now - lastClickTime < 400) {
+                        delete flex.locks[currentRoom][bc];
+                        applyLockState();
+                        saveDataToStorage();
+                    }
+                } else {
+                    // Single click locks
+                    flex.locks[currentRoom][bc] = true;
+                    applyLockState();
+                    saveDataToStorage();
+                }
+            
+                lastClickTime = now;
+            });
+
+            // When editing value, if duplicate, reject; if valid and non-empty on blur/change => auto-lock
+            const handleCommit = () => {
+                const previousAssigned = (assignedMap[bc] || '').trim();
+                const val = (input.value || '').trim();
+                if (!val) {
+                    // If the value is cleared, unassign the barcode
+                    if (assignedMap[bc]) { // Check if it was previously assigned
+                        commitUnassign(bc, currentRoom);
+                    }
+                    return;
+                }
+                // uniqueness check (exclude current barcode)
+                const existingAssignments = findEcsAssignments(val, bc);
+                if (existingAssignments.length > 0) {
+                    const originalEcs = val.trim();
+                    let baseEcs = originalEcs;
+                    
+                    // Check if the input value already has a suffix and strip it to find the base code
+                    const suffixMatch = originalEcs.match(/^(.*)\.\d+$/);
+                    if (suffixMatch) {
+                        baseEcs = suffixMatch[1];
+                    }
+
+                    // Find the highest existing suffix for the base code across all assignments
+                    let maxSuffix = 0;
+                    const flex = appState.flexibleInspections || {};
+                    const rooms = (flex.rooms || []);
+                    
+                    for (const room of rooms) {
+                        const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+                        for (const [existingBc, existingCode] of Object.entries(map)) {
+                            if (!existingCode) continue;
+                            const trimmedCode = String(existingCode).trim();
+                            
+                            // Check if the code starts with the base ECS (case-insensitive)
+                            if (trimmedCode.toLowerCase().startsWith(baseEcs.toLowerCase())) {
+                                const suffixPart = trimmedCode.substring(baseEcs.length);
+                                
+                                // Match for .<number> suffix
+                                const match = suffixPart.match(/^\.(\d+)$/);
+                                
+                                // If it's the base code itself (no suffix) and it's the exact match that triggered the duplicate check
+                                if (trimmedCode.toLowerCase() === baseEcs.toLowerCase()) {
+                                    maxSuffix = Math.max(maxSuffix, 0); // Treat base code as suffix 0
+                                } else if (match) {
+                                    maxSuffix = Math.max(maxSuffix, parseInt(match[1]));
+                                }
+                            }
+                        }
+                    }
+                    
+                    const newSuffix = maxSuffix + 1;
+                    const newEcs = `${baseEcs}.${newSuffix}`;
+
+                    // Use the custom modal for iOS-compatible confirmation
+                    const message = `Duplicate ECS Code: "${originalEcs}" is already used by another barcode. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`;
+                    
+                    showMessageModal('Duplicate ECS Code', message, () => {
+                        // Confirmation callback: User chose to insert the duplicated code with suffix
+                        input.value = newEcs;
+                        // Continue to save and lock (handleCommit will run the rest of its code after the modal is hidden)
+                        // We need to re-run the commit logic to save and lock the new value.
+                        // Since we are inside handleCommit, we can call the rest of the logic directly.
+                        // However, since handleCommit is called on blur/change, we must ensure we don't trigger a loop.
+                        // The simplest way is to call the rest of the logic inside the callback.
+                        
+                        // Re-run the final save and lock part of handleCommit
+                        const finalVal = (input.value || '').trim();
+
+                        // If the ECS changed and the previous value is no longer used, return the previous code to the presets list
+                        if (previousAssigned && previousAssigned.toLowerCase() !== finalVal.toLowerCase()) {
+                            const remainingPrev = findEcsAssignments(previousAssigned, bc);
+                            if (remainingPrev.length === 0) {
+                                flex.ecsPresets = Array.isArray(flex.ecsPresets) ? flex.ecsPresets : [];
+                                const existsPrev = flex.ecsPresets.some(code => String(code).trim().toLowerCase() === previousAssigned.toLowerCase());
+                                if (!existsPrev) {
+                                    flex.ecsPresets.push(previousAssigned);
+                                    flex.ecsPresets.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+                                }
+                            }
+                        }
+
+                        // Remove the newly accepted ECS from the presets list so it is not suggested again
+                        if (finalVal) {
+                            if (!Array.isArray(flex.ecsPresets)) {
+                                flex.ecsPresets = [];
+                            }
+                            flex.ecsPresets = flex.ecsPresets.filter(code => String(code).trim().toLowerCase() !== finalVal.toLowerCase());
+                        }
+
+                        assignedMap[bc] = finalVal;
+                        flex.locks[currentRoom][bc] = true;
+                        saveDataToStorage();
+                        applyLockState();
+                        renderFlexBarcodeRows();
+                    }, `Accept "${newEcs}"`, 'Revert');
+                    
+                    // IMPORTANT: We return here to prevent the rest of handleCommit from running immediately.
+                    // The logic will continue inside the callback.
+                    return;
+                }
+                // save and lock immediately
+                const trimmedVal = val.trim();
+
+                // If the ECS changed and the previous value is no longer used, return the previous code to the presets list
+                if (previousAssigned && previousAssigned.toLowerCase() !== trimmedVal.toLowerCase()) {
+                    const remainingPrev = findEcsAssignments(previousAssigned, bc);
+                    if (remainingPrev.length === 0) {
+                        flex.ecsPresets = Array.isArray(flex.ecsPresets) ? flex.ecsPresets : [];
+                        const existsPrev = flex.ecsPresets.some(code => String(code).trim().toLowerCase() === previousAssigned.toLowerCase());
+                        if (!existsPrev) {
+                            flex.ecsPresets.push(previousAssigned);
+                            flex.ecsPresets.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+                        }
+                    }
+                }
+
+                // Remove the newly assigned ECS from the presets list so it is not suggested again
+                if (trimmedVal) {
+                    if (!Array.isArray(flex.ecsPresets)) {
+                        flex.ecsPresets = [];
+                    }
+                    flex.ecsPresets = flex.ecsPresets.filter(code => String(code).trim().toLowerCase() !== trimmedVal.toLowerCase());
+                }
+
+                assignedMap[bc] = trimmedVal;
+                flex.locks[currentRoom][bc] = true;
+                saveDataToStorage();
+                applyLockState();
+                renderFlexBarcodeRows();
+            };
+
+            input.addEventListener('change', handleCommit);
+            input.addEventListener('blur', handleCommit);
+            input.addEventListener('input', () => {
+                // While typing, keep unlocked
+                if (flex.locks[currentRoom][bc]) delete flex.locks[currentRoom][bc];
+                applyLockState();
+            });
+
+            applyLockState();
+
+            ecsWrap.appendChild(lockBtn);
+            ecsWrap.appendChild(input);
+            wrapper.appendChild(ecsWrap);
+
+            controlsRow.appendChild(wrapper);
+            controlsCell.appendChild(controlsRow);
+            row.appendChild(controlsCell);
+
+            container.appendChild(row);
+        });
+
+        const divider = document.createElement('div');
+        divider.className = 'section-divider';
+        container.appendChild(divider);
+    }
+
+    // --- UNASSIGNED POOL (visible only in current room) ---
+    const pool = flex.unassignedBarcodes || [];
+    if (!pool.length) {
+        const empty = document.createElement('div');
+        empty.className = 'grid-row';
+        empty.innerHTML = '<div class="grid-cell">All barcodes have been assigned.</div>';
+        container.appendChild(empty);
+        return;
+    }
+
+    // limit to 10 visible at once
+    const step = 10;
+    if (typeof flex.poolVisibleCount !== 'number' || flex.poolVisibleCount < step) {
+        flex.poolVisibleCount = step;
+    }
+    const visible = pool.slice(0, flex.poolVisibleCount);
+    const remaining = pool.length - visible.length;
+    const increment = 5;
+
+    visible.forEach(bc => {
+        const row = document.createElement('div');
+        row.className = 'grid-row';
+        row.setAttribute('data-pool-row', '1');
+
+        const codeCell = document.createElement('div');
+        codeCell.className = 'grid-cell code-cell';
+        codeCell.textContent = bc;
+        row.appendChild(codeCell);
+
+        const controlsCell = document.createElement('div');
+        controlsCell.className = 'grid-cell controls-cell';
+
+        const controlsRow = document.createElement('div');
+        controlsRow.className = 'controls-row';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'control-wrapper';
+        const label = document.createElement('div');
+        label.className = 'control-label';
+        label.textContent = 'ECS Code';
+        wrapper.appendChild(label);
+
+        // ECS input row with padlock BEFORE the input
+        const ecsWrap = document.createElement('div');
+        ecsWrap.style.display = 'flex';
+        ecsWrap.style.alignItems = 'center';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'entry-input';
+        input.placeholder = 'Enter ECS code...';
+        input.dataset.barcode = bc;
+        if (ecsPresetListId) {
+            input.setAttribute('list', ecsPresetListId);
+        }
+
+        // padlock icon (left)
+        const lockBtn = document.createElement('button');
+        lockBtn.className = 'button lock-btn';
+        lockBtn.style.marginRight = '8px';
+        const lockIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        lockIcon.setAttribute("viewBox", "0 0 24 24");
+        lockIcon.innerHTML = '<path d="M12 1a5 5 0 0 0-5 5v4H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V12a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 9V6a3 3 0 0 1 6 0v4H9z"/>';
+        lockBtn.appendChild(lockIcon);
+        lockBtn.title = 'Unlock to edit';
+        lockBtn.style.display = 'none'; // hidden until a value is set
+
+        // ensure locks map exists
+        flex.locks = flex.locks || {};
+        flex.locks[currentRoom] = flex.locks[currentRoom] || {};
+
+        const applyLockState = () => {
+            const hasVal = (input.value || '').trim().length > 0;
+            lockBtn.style.display = hasVal ? '' : 'none';
+            if (hasVal && flex.locks[currentRoom][bc]) {
+                input.readOnly = true;
+                lockBtn.classList.add('locked'); lockBtn.classList.remove('unlocked');
+                lockBtn.title = 'Locked';
+            } else {
+                input.readOnly = false;
+                lockBtn.classList.add('unlocked'); lockBtn.classList.remove('locked');
+                lockBtn.title = 'Unlock to edit';
+            }
+        };
+
+        lockBtn.addEventListener('click', () => {
+            const hasVal = (input.value || '').trim().length > 0;
+            if (!hasVal) return;
+            const current = !!flex.locks[currentRoom][bc];
+            if (current) {
+                if (!confirm('Unlock this ECS code so you can edit it?')) return;
+                delete flex.locks[currentRoom][bc];
+            } else {
+                flex.locks[currentRoom][bc] = true;
+            }
+            applyLockState();
+            saveDataToStorage();
+        });        // Assign handler for unassigned -> assigned
+        const commitAssign = () => {
+            const val = (input.value || '').trim();
+            if (!val) {
+                // If the value is cleared, unassign the barcode
+                if (flex.assignments[currentRoom] && flex.assignments[currentRoom][bc]) {
+                    commitUnassign(bc, currentRoom);
+                } else {
+                    // If it was never assigned, just apply lock state
+                    applyLockState();
+                }
+                return;
+            }
+            // uniqueness check across ALL assignments
+            const existingAssignments = findEcsAssignments(val, bc);
+            if (existingAssignments.length > 0) {
+                const originalEcs = val.trim();
+                let baseEcs = originalEcs;
+                
+                // Check if the input value already has a suffix and strip it to find the base code
+                const suffixMatch = originalEcs.match(/^(.*)\.\d+$/);
+                if (suffixMatch) {
+                    baseEcs = suffixMatch[1];
+                }
+
+                // Find the highest existing suffix for the base code across all assignments
+                let maxSuffix = 0;
+                const flex = appState.flexibleInspections || {};
+                const rooms = (flex.rooms || []);
+                
+                for (const room of rooms) {
+                    const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+                    for (const [existingBc, existingCode] of Object.entries(map)) {
+                        if (!existingCode) continue;
+                        const trimmedCode = String(existingCode).trim();
+                        
+                        // Check if the code starts with the base ECS (case-insensitive)
+                        if (trimmedCode.toLowerCase().startsWith(baseEcs.toLowerCase())) {
+                            const suffixPart = trimmedCode.substring(baseEcs.length);
+                            
+                            // Match for .<number> suffix
+                            const match = suffixPart.match(/^\.(\d+)$/);
+                            
+                            // If it's the base code itself (no suffix) and it's the exact match that triggered the duplicate check
+                            if (trimmedCode.toLowerCase() === baseEcs.toLowerCase()) {
+                                maxSuffix = Math.max(maxSuffix, 0); // Treat base code as suffix 0
+                            } else if (match) {
+                                maxSuffix = Math.max(maxSuffix, parseInt(match[1]));
+                            }
+                        }
+                    }
+                }
+                
+                const newSuffix = maxSuffix + 1;
+                const newEcs = `${baseEcs}.${newSuffix}`;
+
+                // Use the custom modal for iOS-compatible confirmation
+                const message = `Duplicate ECS Code: "${originalEcs}" is already used by another barcode. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`;
+
+                showMessageModal('Duplicate ECS Code', message, () => {
+                    // Confirmation callback: User chose to insert the duplicated code with suffix
+                    // We need to update the local 'val' and 'input.value' before running the rest of commitAssign
+                    const finalVal = newEcs;
+                    input.value = finalVal;
+                    
+                    // Re-run the final assignment part of commitAssign
+                    // Attach barcode to current room with ECS and lock immediately
+                    flex.assignments[currentRoom] = flex.assignments[currentRoom] || {};
+                    flex.assignments[currentRoom][bc] = finalVal;
+                    flex.unassignedBarcodes = (flex.unassignedBarcodes || []).filter(b => b !== bc);
+                    flex.locks[currentRoom][bc] = true;
+                    saveDataToStorage();
+                    // re-render current list (pool shrinks; row will move to "Assigned" section)
+                    renderFlexBarcodeRows();
+                }, `Accept "${newEcs}"`, 'Revert');
+
+                // IMPORTANT: We return here to prevent the rest of commitAssign from running immediately.
+                // The logic will continue inside the callback.
+                return;
+            }
+            // Attach barcode to current room with ECS and lock immediately
+            flex.assignments[currentRoom] = flex.assignments[currentRoom] || {};
+            flex.assignments[currentRoom][bc] = val;
+            flex.unassignedBarcodes = (flex.unassignedBarcodes || []).filter(b => b !== bc);
+            flex.locks[currentRoom][bc] = true;
+            saveDataToStorage();
+            // re-render current list (pool shrinks; row will move to "Assigned" section)
+            renderFlexBarcodeRows();
+        };
+
+        input.addEventListener('change', commitAssign);
+        input.addEventListener('blur', commitAssign);
+        input.addEventListener('input', () => {
+            // ensure unlocked while typing
+            if (flex.locks[currentRoom][bc]) delete flex.locks[currentRoom][bc];
+            applyLockState();
+        });
+
+        applyLockState();
+
+        ecsWrap.appendChild(lockBtn);
+        ecsWrap.appendChild(input);
+        wrapper.appendChild(ecsWrap);
+
+        controlsRow.appendChild(wrapper);
+        controlsCell.appendChild(controlsRow);
+        row.appendChild(controlsCell);
+
+        container.appendChild(row);
+    });
+
+    // '+' button to show 30 more
+    if (remaining > 0) {
+        const loadMoreBtn = document.createElement('button');
+        loadMoreBtn.className = 'button';
+        loadMoreBtn.textContent = '+ Load 5 more barcodes';
+        loadMoreBtn.style.marginTop = '12px';
+        loadMoreBtn.addEventListener('click', () => {
+            flex.poolVisibleCount += increment;
+            saveDataToStorage();
+            renderFlexBarcodeRows();
+        });
+        container.appendChild(loadMoreBtn);
+    }
+
+    updateFlexCounters();
+}
+
+
+            
+        function onFlexAssignEcs(e) {
+            const val = (e.target.value || '').trim();
+            const barcode = e.target.dataset.barcode;
+            if (!val) return; // do nothing if empty
+
+            const flex = appState.flexibleInspections;
+            const rooms = flex.rooms || [];
+            const currentRoom = rooms[flex.currentRoomIndex];
+
+            // Attach barcode -> ECS to the current room and remove from pool
+            flex.assignments[currentRoom] = flex.assignments[currentRoom] || {};
+            flex.assignments[currentRoom][barcode] = val;
+
+            // remove from unassigned
+            flex.unassignedBarcodes = (flex.unassignedBarcodes || []).filter(b => b !== barcode);
+
+            saveDataToStorage();
+            renderFlexBarcodeRows();
+        }
+
+        function navigateFlexRoom(delta) {
+            const flex = appState.flexibleInspections;
+            const newIndex = flex.currentRoomIndex + delta;
+            if (newIndex >= 0 && newIndex < flex.rooms.length) {
+                flex.currentRoomIndex = newIndex;
+                updateFlexCheckPage();
+                renderFlexBarcodeRows();
+                saveDataToStorage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (newIndex >= flex.rooms.length) {
+                showCompletionPage_Flexible();
+            }
+        }
+
+        function backToFlexInput() {
+            appState.flexibleInspections.isFlexibleMode = false;
+            saveDataToStorage();
+            showFlexInputPage();
+        }
+
+        function exportFlexibleToCsv() {
+            try {
+                let csv = 'Barcode,ECS Code,Room\n';
+                const flex = appState.flexibleInspections || {};
+                const rooms = flex.rooms || [];
+        
+                // 1) Main section: barcodes + ECS + room
+                rooms.forEach(room => {
+                    const map = (flex.assignments && flex.assignments[room]) ? flex.assignments[room] : {};
+                    Object.keys(map).forEach(bc => {
+                        const ecs = map[bc] || '';
+                        csv += `"${bc}","${ecs.replace(/"/g, '""')}","${room}"\n`;
+                    });
+                });
+        
+                // 2) Any remaining unassigned barcodes (no room / ECS)
+                (flex.unassignedBarcodes || []).forEach(bc => {
+                    csv += `"${bc}","",""\n`;
+                });
+        
+                // 3) Blank line then room status section at the END of the CSV
+                const roomStatusMap = appState.roomStatus || {};
+                csv += '\nRoom,Status\n';
+        
+                rooms.forEach(room => {
+                    const status = roomStatusMap[room] || '';
+                    csv += `"${room}","${String(status).replace(/"/g, '""')}"\n`;
+                });
+        
+                downloadCsvFile(
+                    csv,
+                    `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`
+                );
+            } catch (err) {
+                console.error(err);
+                showMessageModal('Export Failed', 'Failed to export flexible data.');
+            }
+        }
+
+
+        function showFlexFileUploadModal() {
+            document.getElementById('flexFileUploadModal').classList.add('active');
+            document.getElementById('flexFileName').textContent = '';
+            document.getElementById('flexJsonFileInput').value = '';
+        }
+        function hideFlexFileUploadModal() {
+            document.getElementById('flexFileUploadModal').classList.remove('active');
+        }
+        function uploadFlexBarcodesFile() {
+            const fileInput = document.getElementById('flexJsonFileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                showMessageModal('No File Selected', 'Please select a JSON file to upload.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    // Accept either {barcodes:[...]} or a simple array ["..."]
+                    let barcodes = [];
+                    if (Array.isArray(data)) {
+                        barcodes = data.map(x => String(x)).filter(Boolean);
+                    } else if (data && Array.isArray(data.barcodes)) {
+                        barcodes = data.barcodes.map(x => String(x)).filter(Boolean);
+                    } else {
+                        showMessageModal('Upload Failed', 'JSON must be an array of barcodes or an object with a "barcodes" array.');
+                        return;
+                    }
+                    const flex = appState.flexibleInspections;
+                    // Add as a new inspection dataset
+                    flex.inspections = flex.inspections || [];
+                    flex.inspections.push({ id: Date.now(), count: barcodes.length });
+
+                    // Merge into unassigned pool (avoid duplicates)
+                    const set = new Set(flex.unassignedBarcodes || []);
+                    barcodes.forEach(b => set.add(b));
+                    flex.unassignedBarcodes = Array.from(set);
+
+                    saveDataToStorage();
+                    hideFlexFileUploadModal();
+                    renderFlexBarcodeRows();
+                    showMessageModal('Upload Successful', 'Barcodes uploaded and added to the unassigned pool.');
+                } catch (error) {
+                    console.error('Upload failed:', error);
+                    showMessageModal('Upload Failed', 'Invalid JSON file. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+    </script>
+</body>
+</html>
