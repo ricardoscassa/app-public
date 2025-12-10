@@ -2207,12 +2207,12 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('backToSeStSvInput').addEventListener('click', backToSeStSvInput);
 
             // Room status buttons
-            document.getElementById('noAccessBtn').addEventListener('click', () => setRoomStatus('no-access'));
-            document.getElementById('completedBtn').addEventListener('click', () => setRoomStatus('completed'));
-            document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCodeRoomStatus('no-access'));
-            document.getElementById('codeCompletedBtn').addEventListener('click', () => setCodeRoomStatus('completed'));
-            document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSvRoomStatus('no-access'));
-            document.getElementById('seStSvCompletedBtn').addEventListener('click', () => setSeStSvRoomStatus('completed'));
+            document.getElementById('noAccessBtn').addEventListener('click', () => set('no-access'));
+            document.getElementById('completedBtn').addEventListener('click', () => set('completed'));
+            document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCode('no-access'));
+            document.getElementById('codeCompletedBtn').addEventListener('click', () => setCode('completed'));
+            document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSv('no-access'));
+            document.getElementById('seStSvCompletedBtn').addEventListener('click', () => setSeStSv('completed'));
 
             // Completion page buttons
             document.getElementById('exportExcelCompleteEA').addEventListener('click', exportToCsv);
@@ -2334,8 +2334,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
 
             document.getElementById('flexUploadFile').addEventListener('click', uploadFlexBarcodesFile);
             // Flexible room status buttons
-            document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('no-access'));
-            document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('completed'));
+            document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexible('no-access'));
+            document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexible('completed'));
 
 
             document.getElementById('flexAddRoomBtn').addEventListener('click', function() {
@@ -4580,7 +4580,18 @@ function renderFlexBarcodeRows() {
                 (flex.unassignedBarcodes || []).forEach(bc => {
                     csv += `"${bc}","",""\n`;
                 });
-                downloadCsvFile(csv, `flexible_tracking_${new Date().toISOString().split('T')[0]}.csv`);
+
+                // try both possible property names, in case of different structures
+                const roomStatusMap = flex.roomStatuses || flex.roomStatus || {};
+        
+                // blank line, then new header for the room status section
+                csv += '\nRoom,Status\n';
+        
+                rooms.forEach(room => {
+                    const status = (roomStatusMap && roomStatusMap[room]) ? roomStatusMap[room] : '';
+                    csv += `"${room}","${String(status).replace(/"/g, '""')}"\n`;
+                
+                downloadCsvFile(csv, `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`);
             } catch (err) {
                 console.error(err);
                 showMessageModal('Export Failed', 'Failed to export flexible data.');
