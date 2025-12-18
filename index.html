@@ -418,6 +418,12 @@
             border-color: #c62828;
         }
 
+        /* Added style for return status indicator */
+        .status-indicator.return {
+            background-color: #ff9800;
+            border-color: #f57c00;
+        }
+
         .status-indicator.default {
             background-color: #e0e0e0;
             border-color: #bdbdbd;
@@ -451,6 +457,15 @@
             content: "✗";
         }
 
+        /* Added style and symbol for return status */
+        .status-symbol.return {
+            color: #ff9800;
+        }
+
+        .status-symbol.return::before {
+            content: "↺";
+        }
+
         .status-symbol.default {
             color: #bdbdbd;
         }
@@ -480,6 +495,18 @@
         .custom-dropdown-button.completed:focus {
             border-color: #4caf50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        /* Return status color coding for custom dropdown button */
+        .custom-dropdown-button.return {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+            color: #ef6c00;
+        }
+
+        .custom-dropdown-button.return:focus {
+            border-color: #ff9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
         }
 
         .room-select {
@@ -520,6 +547,18 @@
             background-color: #e8f5e8;
             border-color: #4caf50;
             color: #2e7d32;
+        }
+
+        /* Return state styling for room-select (fallback select elements) */
+        .room-select.return {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+            color: #ef6c00;
+        }
+
+        .room-select.return:focus {
+            border-color: #ff9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
         }
 
         .room-select.no-access:focus {
@@ -1033,6 +1072,18 @@
             background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Return status button styling */
+        .status-btn.return {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+        }
+
+        .status-btn.return:hover {
+            background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
         }
 
         .navigation {
@@ -1625,8 +1676,9 @@ Room Codes (Room- Codes)
                         <div class="custom-dropdown-options"></div>
                     </div>
                     <div class="room-status-buttons">
-                        <button id="noAccessBtn" class="status-btn no-access">No Access</button>
                         <button id="completedBtn" class="status-btn completed">Access</button>
+                        <button id="returnBtn" class="status-btn return">Return</button>
+                        <button id="noAccessBtn" class="status-btn no-access">No Access</button>
                     </div>
                     <div id="progressInfo" class="progress-info">Room 1 of 5</div>
                     <div class="progress-bar">
@@ -1660,8 +1712,9 @@ Room Codes (Room- Codes)
                         <div class="custom-dropdown-options"></div>
                     </div>
                     <div class="room-status-buttons">
-                        <button id="codeNoAccessBtn" class="status-btn no-access">No Access</button>
                         <button id="codeCompletedBtn" class="status-btn completed">Access</button>
+                        <button id="codeReturnBtn" class="status-btn return">Return</button>
+                        <button id="codeNoAccessBtn" class="status-btn no-access">No Access</button>
                     </div>
                     <div id="codeProgressInfo" class="progress-info">Room 1 of 5</div>
                     <div class="progress-bar">
@@ -1700,8 +1753,9 @@ Room Codes (Room- Codes)
                         <div class="custom-dropdown-options"></div>
                     </div>
                     <div class="room-status-buttons">
-                        <button id="seStSvNoAccessBtn" class="status-btn no-access">No Access</button>
                         <button id="seStSvCompletedBtn" class="status-btn completed">Access</button>
+                        <button id="seStSvReturnBtn" class="status-btn return">Return</button>
+                        <button id="seStSvNoAccessBtn" class="status-btn no-access">No Access</button>
                     </div>
                     <div id="seStSvProgressInfo" class="progress-info">Room 1 of 5</div>
                     <div class="progress-bar">
@@ -1828,8 +1882,9 @@ Room Codes (Room- Codes)
                     </div>
                     
                     <div class="room-status-buttons">
-                        <button id="flexNoAccessBtn" class="status-btn no-access">No Access</button>
                         <button id="flexAccessBtn" class="status-btn completed">Access</button>
+                        <button id="flexReturnBtn" class="status-btn return">Return</button>
+                        <button id="flexNoAccessBtn" class="status-btn no-access">No Access</button>
                     </div>
                     <div class="progress-bar">
                         <div id="flexProgressFill" class="progress-fill" style="width: 0%"></div>
@@ -2208,12 +2263,15 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('backToSeStSvInput').addEventListener('click', backToSeStSvInput);
 
             // Room status buttons
-            document.getElementById('noAccessBtn').addEventListener('click', () => setRoomStatus('no-access'));
             document.getElementById('completedBtn').addEventListener('click', () => setRoomStatus('completed'));
-            document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCodeRoomStatus('no-access'));
+            document.getElementById('returnBtn').addEventListener('click', () => setRoomStatus('return'));
+            document.getElementById('noAccessBtn').addEventListener('click', () => setRoomStatus('no-access'));
             document.getElementById('codeCompletedBtn').addEventListener('click', () => setCodeRoomStatus('completed'));
-            document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSvRoomStatus('no-access'));
+            document.getElementById('codeReturnBtn').addEventListener('click', () => setCodeRoomStatus('return'));
+            document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCodeRoomStatus('no-access'));
             document.getElementById('seStSvCompletedBtn').addEventListener('click', () => setSeStSvRoomStatus('completed'));
+            document.getElementById('seStSvReturnBtn').addEventListener('click', () => setSeStSvRoomStatus('return'));
+            document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSvRoomStatus('no-access'));
 
             // Completion page buttons
             document.getElementById('exportExcelCompleteEA').addEventListener('click', exportToCsv);
@@ -2337,8 +2395,9 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
 
             document.getElementById('flexUploadFile').addEventListener('click', uploadFlexBarcodesFile);
             // Flexible room status buttons
-            document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('no-access'));
             document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('completed'));
+            document.getElementById('flexReturnBtn').addEventListener('click', () => setFlexibleRoomStatus('return'));
+            document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('no-access'));
 
 
             document.getElementById('flexAddRoomBtn').addEventListener('click', function() {
@@ -2825,10 +2884,13 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
         }
 
         function getRoomStatus(roomName) {
-            if (appState.roomStatus[roomName] === 'no-access') {
+            const status = appState.roomStatus[roomName];
+            if (status === 'no-access') {
                 return 'no-access';
-            } else if (appState.roomStatus[roomName] === 'completed') {
+            } else if (status === 'completed') {
                 return 'completed';
+            } else if (status === 'return') {
+                return 'return';
             } else {
                 return 'default';
             }
@@ -2842,6 +2904,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 button.classList.add('no-access');
             } else if (status === 'completed') {
                 button.classList.add('completed');
+            } else if (status === 'return') {
+                button.classList.add('return');
             }
         }
 
@@ -4604,6 +4668,8 @@ function renderFlexBarcodeRows() {
                     let statusLabel = '';
                     if (statusKey === 'completed') {
                         statusLabel = 'Access';
+                    } else if (statusKey === 'return') {
+                        statusLabel = 'Return';
                     } else if (statusKey === 'no-access') {
                         statusLabel = 'No Access';
                     }
@@ -4671,4 +4737,3 @@ function renderFlexBarcodeRows() {
     </script>
 </body>
 </html>
-
