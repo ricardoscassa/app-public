@@ -1834,10 +1834,10 @@ Room Codes (Room- Codes)
                     <textarea
                         id="flexEcsCodeList"
                         class="room-textarea"
-                        placeholder="Enter ECS codes, one per line (or leave empty to type them during inspection)..."
+                        placeholder="Enter ECS codes, one per line (or leave empty to type them during inspection). To mark a code as already tagged, append '-HPCC' (e.g. ABC123-HPCC)."
                     ></textarea>
                     <div class="help-text">
-                        If you provide ECS codes here, they will appear as a dropdown list when assigning ECS codes on the next page. Each code can only be used once, but you can still type new codes manually during inspection.
+                        If you provide ECS codes here, they will appear as a dropdown list when assigning ECS codes on the next page. Each code can only be used once, but you can still type new codes manually during inspection. You can also flag codes that already have barcodes assigned by adding the suffix <code>&minus;HPCC</code> after the code (for example, <code>ABC123-HPCC</code>). Codes flagged this way will trigger a message during assignment indicating that a barcode is already attached and will offer the option to add a duplicate with a numeric suffix.
                     </div>
                 </div>
 
@@ -3934,6 +3934,36 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 });
             }
 
+            // Parse ECS presets for codes marked as having a barcode already assigned via "-HPCC" suffix.
+            // Codes of the form "<code>-HPCC" indicate that the base code already has a barcode attached.
+            // Strip the suffix and collect such base codes into preAssignedEcs. The base codes are added back into
+            // the presets list so they can be selected during assignment.
+            const preAssigned = [];
+            ecsPresets = ecsPresets.map(code => {
+                const lower = code.toLowerCase();
+                const idx = lower.indexOf('-hpcc');
+                if (idx >= 0) {
+                    const base = code.slice(0, idx).trim();
+                    if (base) {
+                        preAssigned.push(base);
+                        return base;
+                    }
+                }
+                return code;
+            });
+            // Remove duplicate entries after stripping HPCC suffixes
+            if (ecsPresets.length) {
+                const seen = new Set();
+                ecsPresets = ecsPresets.filter(code => {
+                    const key = String(code).trim().toLowerCase();
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            }
+            // Store the list of pre-assigned ECS codes on the flexible inspections state for later validation
+            appState.flexibleInspections.preAssignedEcs = Array.from(new Set(preAssigned.map(c => c.trim())));
+
             const rooms = roomsText ? roomsText.split('\n').map(s => s.trim()).filter(Boolean) : [];
             const barcodes = barcodesText.split('\n').map(s => s.trim()).filter(Boolean);
 
@@ -4217,9 +4247,19 @@ function renderFlexBarcodeRows() {
                     }
                     return;
                 }
+                // Determine if this ECS code is pre-assigned via the optional input list.
+                const originalEcsForCheck = val.trim();
+                let baseEcsForCheck = originalEcsForCheck;
+                const suffixMatchForCheck = originalEcsForCheck.match(/^(.*)\.\d+$/);
+                if (suffixMatchForCheck) {
+                    baseEcsForCheck = suffixMatchForCheck[1];
+                }
+                const preListForCheck = (appState.flexibleInspections && appState.flexibleInspections.preAssignedEcs) || [];
+                const isPreAssignedCode = preListForCheck.some(code => code.toLowerCase() === baseEcsForCheck.toLowerCase());
+
                 // uniqueness check (exclude current barcode)
                 const existingAssignments = findEcsAssignments(val, bc);
-                if (existingAssignments.length > 0) {
+                if (existingAssignments.length > 0 || isPreAssignedCode) {
                     const originalEcs = val.trim();
                     let baseEcs = originalEcs;
                     
@@ -4260,10 +4300,19 @@ function renderFlexBarcodeRows() {
                     const newSuffix = maxSuffix + 1;
                     const newEcs = `${baseEcs}.${newSuffix}`;
 
+                    // Determine if this ECS code is marked as pre-assigned via the optional input list.
+                    const preList = (appState.flexibleInspections && appState.flexibleInspections.preAssignedEcs) || [];
+                    const isPreAssignedCode = preList.some(code => code.toLowerCase() === baseEcs.toLowerCase());
+
+                    // Build appropriate modal title and message. If the ECS code is pre-assigned, inform the user that it already
+                    // has a barcode assigned and offer the duplicate option. Otherwise, use the standard duplicate message.
+                    const duplicateTitle = isPreAssignedCode ? 'ECS Code Already Assigned' : 'Duplicate ECS Code';
+                    const duplicateMessage = isPreAssignedCode
+                        ? `The ECS code "${originalEcs}" already has a barcode assigned. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`
+                        : `Duplicate ECS Code: "${originalEcs}" is already used by another barcode. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`;
+
                     // Use the custom modal for iOS-compatible confirmation
-                    const message = `Duplicate ECS Code: "${originalEcs}" is already used by another barcode. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`;
-                    
-                    showMessageModal('Duplicate ECS Code', message, () => {
+                    showMessageModal(duplicateTitle, duplicateMessage, () => {
                         // Confirmation callback: User chose to insert the duplicated code with suffix
                         input.value = newEcs;
                         // Continue to save and lock (handleCommit will run the rest of its code after the modal is hidden)
@@ -4474,9 +4523,19 @@ function renderFlexBarcodeRows() {
                 }
                 return;
             }
+            // Determine if this ECS code is pre-assigned via the optional input list.
+            const originalEcsForCheckAssign = val.trim();
+            let baseEcsForCheckAssign = originalEcsForCheckAssign;
+            const suffixMatchForCheckAssign = originalEcsForCheckAssign.match(/^(.*)\.\d+$/);
+            if (suffixMatchForCheckAssign) {
+                baseEcsForCheckAssign = suffixMatchForCheckAssign[1];
+            }
+            const preListForCheckAssign = (appState.flexibleInspections && appState.flexibleInspections.preAssignedEcs) || [];
+            const isPreAssignedCodeAssign = preListForCheckAssign.some(code => code.toLowerCase() === baseEcsForCheckAssign.toLowerCase());
+
             // uniqueness check across ALL assignments
             const existingAssignments = findEcsAssignments(val, bc);
-            if (existingAssignments.length > 0) {
+            if (existingAssignments.length > 0 || isPreAssignedCodeAssign) {
                 const originalEcs = val.trim();
                 let baseEcs = originalEcs;
                 
@@ -4517,10 +4576,19 @@ function renderFlexBarcodeRows() {
                 const newSuffix = maxSuffix + 1;
                 const newEcs = `${baseEcs}.${newSuffix}`;
 
-                // Use the custom modal for iOS-compatible confirmation
-                const message = `Duplicate ECS Code: "${originalEcs}" is already used by another barcode. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`;
+                // Determine if this ECS code is marked as pre-assigned via the optional input list.
+                const preList = (appState.flexibleInspections && appState.flexibleInspections.preAssignedEcs) || [];
+                const isPreAssignedCode = preList.some(code => code.toLowerCase() === baseEcs.toLowerCase());
 
-                showMessageModal('Duplicate ECS Code', message, () => {
+                // Build appropriate modal title and message. If the ECS code is pre-assigned, inform the user that it already
+                // has a barcode assigned and offer the duplicate option. Otherwise, use the standard duplicate message.
+                const duplicateTitle = isPreAssignedCode ? 'ECS Code Already Assigned' : 'Duplicate ECS Code';
+                const duplicateMessage = isPreAssignedCode
+                    ? `The ECS code "${originalEcs}" already has a barcode assigned. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`
+                    : `Duplicate ECS Code: "${originalEcs}" is already used by another barcode. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`;
+
+                // Use the custom modal for iOS-compatible confirmation
+                showMessageModal(duplicateTitle, duplicateMessage, () => {
                     // Confirmation callback: User chose to insert the duplicated code with suffix
                     // We need to update the local 'val' and 'input.value' before running the rest of commitAssign
                     const finalVal = newEcs;
