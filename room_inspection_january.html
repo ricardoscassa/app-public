@@ -418,7 +418,7 @@
             border-color: #c62828;
         }
 
-        .status-indicator.revisit {
+        .status-indicator.return {
             background-color: #f39c12;
             border-color: #8a5a00;
         }
@@ -456,11 +456,11 @@
             content: "✗";
         }
 
-        .status-symbol.revisit {
+        .status-symbol.return {
             color: #f39c12;
         }
 
-        .status-symbol.revisit::before {
+        .status-symbol.return::before {
             content: "↻";
         }
 
@@ -485,7 +485,7 @@
             color: #2e7d32;
         }
 
-        .custom-dropdown-button.revisit {
+        .custom-dropdown-button.return {
             background-color: #fff3e0;
             border-color: #f39c12;
             color: #8a5a00;
@@ -501,7 +501,7 @@
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
         }
 
-        .custom-dropdown-button.revisit:focus {
+        .custom-dropdown-button.return:focus {
             border-color: #f39c12;
             box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.12);
         }
@@ -546,7 +546,7 @@
             color: #2e7d32;
         }
 
-        .room-select.revisit {
+        .room-select.return {
             background-color: #fff3e0;
             border-color: #f39c12;
             color: #8a5a00;
@@ -562,7 +562,7 @@
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
         }
 
-        .room-select.revisit:focus {
+        .room-select.return:focus {
             border-color: #f39c12;
             box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.12);
         }
@@ -1070,12 +1070,12 @@
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
         }
 
-        .status-btn.revisit {
+        .status-btn.return {
             background: linear-gradient(135deg, #f0932b 0%, #e67e22 100%);
             color: white;
         }
 
-        .status-btn.revisit:hover {
+        .status-btn.return:hover {
             background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(240, 147, 43, 0.35);
@@ -1875,7 +1875,7 @@ Room Codes (Room- Codes)
                     
                     <div class="room-status-buttons">
                         <button id="flexNoAccessBtn" class="status-btn no-access">No Access</button>
-                        <button id="flexRevisitBtn" class="status-btn revisit">Return</button>
+                        <button id="flexReturnBtn" class="status-btn return">Return</button>
                         <button id="flexAccessBtn" class="status-btn completed">Access</button>
                     </div>
                     <div class="progress-bar">
@@ -2386,7 +2386,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             // Flexible room status buttons
             document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('no-access'));
             document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('completed'));
-            document.getElementById('flexRevisitBtn').addEventListener('click', () => setFlexibleRoomStatus('revisit'));
+            document.getElementById('flexReturnBtn').addEventListener('click', () => setFlexibleRoomStatus('return'));
 
 
             document.getElementById('flexAddRoomBtn').addEventListener('click', function() {
@@ -2877,8 +2877,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 return 'no-access';
             } else if (appState.roomStatus[roomName] === 'completed') {
                 return 'completed';
-            } else if (appState.roomStatus[roomName] === 'revisit') {
-                return 'revisit';
+            } else if (appState.roomStatus[roomName] === 'return') {
+                return 'return';
             } else {
                 return 'default';
             }
@@ -2892,8 +2892,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 button.classList.add('no-access');
             } else if (status === 'completed') {
                 button.classList.add('completed');
-            } else if (status === 'revisit') {
-                button.classList.add('revisit');
+            } else if (status === 'return') {
+                button.classList.add('return');
             }
         }
 
@@ -4658,7 +4658,7 @@ function renderFlexBarcodeRows() {
                         statusLabel = 'Access';
                     } else if (statusKey === 'no-access') {
                         statusLabel = 'No Access';
-                    } else if (statusKey === 'revisit') {
+                    } else if (statusKey === 'return') {
                         statusLabel = 'Return';
                     }
                     csv += `"${room}","${statusLabel}"\n`;
