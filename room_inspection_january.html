@@ -1875,7 +1875,7 @@ Room Codes (Room- Codes)
                     
                     <div class="room-status-buttons">
                         <button id="flexNoAccessBtn" class="status-btn no-access">No Access</button>
-                        <button id="flexRevisitBtn" class="status-btn revisit">Revisit</button>
+                        <button id="flexRevisitBtn" class="status-btn revisit">Return</button>
                         <button id="flexAccessBtn" class="status-btn completed">Access</button>
                     </div>
                     <div class="progress-bar">
@@ -4659,7 +4659,7 @@ function renderFlexBarcodeRows() {
                     } else if (statusKey === 'no-access') {
                         statusLabel = 'No Access';
                     } else if (statusKey === 'revisit') {
-                        statusLabel = 'Revisit';
+                        statusLabel = 'Return';
                     }
                     csv += `"${room}","${statusLabel}"\n`;
                 });
