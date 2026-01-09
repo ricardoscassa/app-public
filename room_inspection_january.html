@@ -418,11 +418,6 @@
             border-color: #c62828;
         }
 
-        .status-indicator.return {
-            background-color: #f39c12;
-            border-color: #8a5a00;
-        }
-
         .status-indicator.default {
             background-color: #e0e0e0;
             border-color: #bdbdbd;
@@ -456,14 +451,6 @@
             content: "✗";
         }
 
-        .status-symbol.return {
-            color: #f39c12;
-        }
-
-        .status-symbol.return::before {
-            content: "↻";
-        }
-
         .status-symbol.default {
             color: #bdbdbd;
         }
@@ -485,12 +472,6 @@
             color: #2e7d32;
         }
 
-        .custom-dropdown-button.return {
-            background-color: #fff3e0;
-            border-color: #f39c12;
-            color: #8a5a00;
-        }
-
         .custom-dropdown-button.no-access:focus {
             border-color: #f44336;
             box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
@@ -499,11 +480,6 @@
         .custom-dropdown-button.completed:focus {
             border-color: #4caf50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-        }
-
-        .custom-dropdown-button.return:focus {
-            border-color: #f39c12;
-            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.12);
         }
 
         .room-select {
@@ -546,12 +522,6 @@
             color: #2e7d32;
         }
 
-        .room-select.return {
-            background-color: #fff3e0;
-            border-color: #f39c12;
-            color: #8a5a00;
-        }
-
         .room-select.no-access:focus {
             border-color: #f44336;
             box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
@@ -560,11 +530,6 @@
         .room-select.completed:focus {
             border-color: #4caf50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-        }
-
-        .room-select.return:focus {
-            border-color: #f39c12;
-            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.12);
         }
 
         .checks-grid {
@@ -1068,17 +1033,6 @@
             background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-        }
-
-        .status-btn.return {
-            background: linear-gradient(135deg, #f0932b 0%, #e67e22 100%);
-            color: white;
-        }
-
-        .status-btn.return:hover {
-            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(240, 147, 43, 0.35);
         }
 
         .navigation {
@@ -1875,7 +1829,6 @@ Room Codes (Room- Codes)
                     
                     <div class="room-status-buttons">
                         <button id="flexNoAccessBtn" class="status-btn no-access">No Access</button>
-                        <button id="flexReturnBtn" class="status-btn return">Return</button>
                         <button id="flexAccessBtn" class="status-btn completed">Access</button>
                     </div>
                     <div class="progress-bar">
@@ -1886,6 +1839,9 @@ Room Codes (Room- Codes)
                 <div id="flexBarcodeContainer" class="code-inspection-grid">
                     <!-- Rows of [Barcode] [ECS Code input] will render here -->
                 </div>
+
+                <!-- Floating button to add a new blank barcode/ECS row -->
+                <button id="flexAddEmptyEntry" class="floating-add-button" title="Add new barcode and ECS code">+</button>
 
                 <div class="navigation">
                     <button id="flexPrevRoom" class="button nav-button secondary">Previous Room</button>
@@ -2062,6 +2018,31 @@ Room Codes (Room- Codes)
         fill: #34c759; /* iOS green */
       }
       .lock-btn:active { transform: scale(0.9); }
+
+      /* Floating add button for flexible barcode page */
+      .floating-add-button {
+        position: fixed;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+        z-index: 999;
+        background-color: #667eea;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        font-size: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      .floating-add-button:hover {
+        background-color: #5567d6;
+      }
     </style>
 
 <script>
@@ -2077,6 +2058,7 @@ Room Codes (Room- Codes)
                 ecsPresets: [],
                 locks: {},
                 poolVisibleCount: 10,
+                pendingEntries: {}, // pending new barcode/ECS entries keyed by room
                 isFlexibleMode: false
             },
 rooms: [],
@@ -2386,7 +2368,6 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             // Flexible room status buttons
             document.getElementById('flexNoAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('no-access'));
             document.getElementById('flexAccessBtn').addEventListener('click', () => setFlexibleRoomStatus('completed'));
-            document.getElementById('flexReturnBtn').addEventListener('click', () => setFlexibleRoomStatus('return'));
 
 
             document.getElementById('flexAddRoomBtn').addEventListener('click', function() {
@@ -2408,6 +2389,27 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             });
 
             document.getElementById('flexCancelUpload').addEventListener('click', hideFlexFileUploadModal);
+
+            // Floating + button: add new blank barcode/ECS entry on the flexible check page
+            const flexAddEntryBtn = document.getElementById('flexAddEmptyEntry');
+            if (flexAddEntryBtn) {
+                flexAddEntryBtn.addEventListener('click', function() {
+                    showMessageModal('Add New Entry', 'Do you want to add a new field with an empty barcode?', () => {
+                        const flex = appState.flexibleInspections;
+                        const rooms = flex.rooms || [];
+                        if (!rooms.length) return;
+                        const currentRoom = rooms[flex.currentRoomIndex];
+                        if (!flex.pendingEntries) flex.pendingEntries = {};
+                        if (!Array.isArray(flex.pendingEntries[currentRoom])) {
+                            flex.pendingEntries[currentRoom] = [];
+                        }
+                        // Append a new entry object for this room
+                        flex.pendingEntries[currentRoom].push({ barcode: '', ecs: '' });
+                        saveDataToStorage();
+                        renderFlexBarcodeRows();
+                    }, 'Add', 'Cancel');
+                });
+            }
     
 
             // Drag and drop functionality
@@ -2877,8 +2879,6 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 return 'no-access';
             } else if (appState.roomStatus[roomName] === 'completed') {
                 return 'completed';
-            } else if (appState.roomStatus[roomName] === 'return') {
-                return 'return';
             } else {
                 return 'default';
             }
@@ -2892,8 +2892,6 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 button.classList.add('no-access');
             } else if (status === 'completed') {
                 button.classList.add('completed');
-            } else if (status === 'return') {
-                button.classList.add('return');
             }
         }
 
@@ -3930,6 +3928,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             appState.flexibleInspections.currentRoomIndex = 0;
             appState.flexibleInspections.unassignedBarcodes = barcodes;
             appState.flexibleInspections.poolVisibleCount = 10;
+            // Clear any pending entries when starting a new flexible inspection
+            appState.flexibleInspections.pendingEntries = {};
             appState.flexibleInspections.assignments = {}; // reset
             appState.flexibleInspections.locks = {};
             appState.flexibleInspections.ecsPresets = ecsPresets;
@@ -4056,6 +4056,9 @@ function renderFlexBarcodeRows() {
     const rooms = flex.rooms || [];
     const currentRoom = rooms[flex.currentRoomIndex];
 
+    // Pending entries for current room (entries added via the + button but not yet committed)
+    const pendingList = (flex.pendingEntries && flex.pendingEntries[currentRoom]) || [];
+
     // Prepare ECS presets datalist with only unused codes
     let ecsPresets = Array.isArray(flex.ecsPresets) ? flex.ecsPresets : [];
     if (ecsPresets.length) {
@@ -4092,7 +4095,7 @@ function renderFlexBarcodeRows() {
         ecsPresetListId = ecsDatalist.id;
     }
 
-// --- ASSIGNED TO CURRENT ROOM ---
+    // --- ASSIGNED TO CURRENT ROOM ---
     const assignedMap = (flex.assignments[currentRoom] || {});
     const assignedBcs = Object.keys(assignedMap);
     if (assignedBcs.length) {
@@ -4346,15 +4349,232 @@ function renderFlexBarcodeRows() {
 
             container.appendChild(row);
         });
+    }
 
+    // --- PENDING ENTRIES (ADDED VIA + BUTTON) ---
+    if (pendingList && pendingList.length) {
+        pendingList.forEach((entry, idx) => {
+            const row = document.createElement('div');
+            row.className = 'grid-row';
+
+            // Barcode editable cell
+            const bcCell = document.createElement('div');
+            bcCell.className = 'grid-cell code-cell';
+            const bcInput = document.createElement('input');
+            bcInput.type = 'text';
+            bcInput.className = 'entry-input';
+            bcInput.placeholder = 'Enter barcode...';
+            bcInput.value = entry.barcode || '';
+            bcCell.appendChild(bcInput);
+            row.appendChild(bcCell);
+
+            // Controls cell with ECS input
+            const controlsCell = document.createElement('div');
+            controlsCell.className = 'grid-cell controls-cell';
+            const controlsRow = document.createElement('div');
+            controlsRow.className = 'controls-row';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'control-wrapper';
+            const label = document.createElement('div');
+            label.className = 'control-label';
+            label.textContent = 'ECS Code';
+            wrapper.appendChild(label);
+            const ecsWrap = document.createElement('div');
+            ecsWrap.style.display = 'flex';
+            ecsWrap.style.alignItems = 'center';
+            const ecsInput = document.createElement('input');
+            ecsInput.type = 'text';
+            ecsInput.className = 'entry-input';
+            ecsInput.placeholder = 'Enter ECS code...';
+            ecsInput.value = entry.ecs || '';
+            if (ecsPresetListId) {
+                ecsInput.setAttribute('list', ecsPresetListId);
+            }
+            // Padlock button: not shown for pending row until assignment occurs
+            const lockBtn = document.createElement('button');
+            lockBtn.className = 'button lock-btn';
+            lockBtn.style.marginRight = '8px';
+            const lockIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            lockIcon.setAttribute("viewBox", "0 0 24 24");
+            lockIcon.innerHTML = '<path d="M12 1a5 5 0 0 0-5 5v4H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V12a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 9V6a3 3 0 0 1 6 0v4H9z"/>';
+            lockBtn.appendChild(lockIcon);
+            lockBtn.title = 'Locked';
+            lockBtn.style.display = 'none'; // Hidden until assignment
+
+            ecsWrap.appendChild(lockBtn);
+            ecsWrap.appendChild(ecsInput);
+            wrapper.appendChild(ecsWrap);
+            controlsRow.appendChild(wrapper);
+            controlsCell.appendChild(controlsRow);
+            row.appendChild(controlsCell);
+
+            // Event handlers to update entry values
+            bcInput.addEventListener('input', () => {
+                entry.barcode = bcInput.value;
+            });
+            ecsInput.addEventListener('input', () => {
+                entry.ecs = ecsInput.value;
+            });
+
+            // Commit pending entry when user leaves either field
+            const commitPending = () => {
+                const bcVal = (entry.barcode || '').trim();
+                const ecsVal = (entry.ecs || '').trim();
+
+                // If no values at all, do nothing
+                if (!bcVal && !ecsVal) return;
+
+                // Ensure a barcode exists
+                if (!bcVal && ecsVal) {
+                    showMessageModal('Input Required', 'Please enter a barcode before adding an ECS code.');
+                    return;
+                }
+
+                // Duplicate barcode check across assignments, unassigned, and other pending entries
+                const bcLower = bcVal.toLowerCase();
+                let duplicate = false;
+                // Check assignments across all rooms
+                const allRooms = flex.rooms || [];
+                for (const r of allRooms) {
+                    const map = (flex.assignments && flex.assignments[r]) ? flex.assignments[r] : {};
+                    for (const existingBc in map) {
+                        if (existingBc.trim().toLowerCase() === bcLower) {
+                            duplicate = true;
+                            break;
+                        }
+                    }
+                    if (duplicate) break;
+                }
+                // Check unassigned barcodes
+                if (!duplicate) {
+                    (flex.unassignedBarcodes || []).forEach(bc => {
+                        if (String(bc).trim().toLowerCase() === bcLower) duplicate = true;
+                    });
+                }
+                // Check other pending entries
+                if (!duplicate) {
+                    pendingList.forEach(p => {
+                        if (p !== entry) {
+                            if ((p.barcode || '').trim().toLowerCase() === bcLower) duplicate = true;
+                        }
+                    });
+                }
+                if (duplicate) {
+                    showMessageModal('Duplicate Barcode', `The barcode "${bcVal}" already exists. Please use a unique barcode.`);
+                    return;
+                }
+
+                // If only barcode provided (no ECS code), treat as a new unassigned barcode
+                if (bcVal && !ecsVal) {
+                    flex.unassignedBarcodes = Array.isArray(flex.unassignedBarcodes) ? flex.unassignedBarcodes : [];
+                    // Add to start of unassigned list
+                    flex.unassignedBarcodes.unshift(bcVal);
+                    // Remove this pending entry
+                    if (flex.pendingEntries && flex.pendingEntries[currentRoom]) {
+                        flex.pendingEntries[currentRoom] = flex.pendingEntries[currentRoom].filter(it => it !== entry);
+                    }
+                    saveDataToStorage();
+                    renderFlexBarcodeRows();
+                    return;
+                }
+
+                // If both barcode and ECS provided, commit assignment
+                if (bcVal && ecsVal) {
+                    // Check for ECS duplicates across assignments
+                    const existingAssignments = findEcsAssignments(ecsVal, bcVal);
+                    if (existingAssignments.length > 0) {
+                        // Duplicate ECS code, propose suffix
+                        const originalEcs = ecsVal.trim();
+                        let baseEcs = originalEcs;
+                        const suffixMatch = originalEcs.match(/^(.*)\.\d+$/);
+                        if (suffixMatch) {
+                            baseEcs = suffixMatch[1];
+                        }
+                        let maxSuffix = 0;
+                        const flexState = appState.flexibleInspections || {};
+                        const roomList = (flexState.rooms || []);
+                        for (const room of roomList) {
+                            const map = (flexState.assignments && flexState.assignments[room]) ? flexState.assignments[room] : {};
+                            for (const [existingBc, existingCode] of Object.entries(map)) {
+                                if (!existingCode) continue;
+                                const trimmedCode = String(existingCode).trim();
+                                if (trimmedCode.toLowerCase().startsWith(baseEcs.toLowerCase())) {
+                                    const suffixPart = trimmedCode.substring(baseEcs.length);
+                                    const match = suffixPart.match(/^\.(\d+)$/);
+                                    if (trimmedCode.toLowerCase() === baseEcs.toLowerCase()) {
+                                        maxSuffix = Math.max(maxSuffix, 0);
+                                    } else if (match) {
+                                        maxSuffix = Math.max(maxSuffix, parseInt(match[1]));
+                                    }
+                                }
+                            }
+                        }
+                        const newSuffix = maxSuffix + 1;
+                        const newEcs = `${baseEcs}.${newSuffix}`;
+                        const message = `Duplicate ECS Code: "${originalEcs}" is already used by another barcode. Do you want to add it as a duplicate with a suffix, for example, "${newEcs}"?`;
+                        showMessageModal('Duplicate ECS Code', message, () => {
+                            // Accept newEcs suffix assignment
+                            commitAssignmentWithEcs(bcVal, newEcs);
+                        }, `Accept "${newEcs}"`, 'Revert');
+                        return;
+                    }
+                    // Commit assignment normally
+                    commitAssignmentWithEcs(bcVal, ecsVal);
+                }
+            };
+
+            // Helper to commit assignment and remove from pending list
+            function commitAssignmentWithEcs(barcodeVal, ecsVal) {
+                // Initialize maps
+                flex.assignments[currentRoom] = flex.assignments[currentRoom] || {};
+                flex.locks = flex.locks || {};
+                flex.locks[currentRoom] = flex.locks[currentRoom] || {};
+
+                // Assign
+                flex.assignments[currentRoom][barcodeVal] = ecsVal;
+                flex.locks[currentRoom][barcodeVal] = true;
+
+                // Remove from unassigned if there somehow exists
+                if (Array.isArray(flex.unassignedBarcodes)) {
+                    flex.unassignedBarcodes = flex.unassignedBarcodes.filter(b => String(b).trim().toLowerCase() !== barcodeVal.toLowerCase());
+                }
+
+                // Remove from ECS presets list so it is not suggested again
+                if (ecsVal) {
+                    if (Array.isArray(flex.ecsPresets)) {
+                        flex.ecsPresets = flex.ecsPresets.filter(code => String(code).trim().toLowerCase() !== ecsVal.trim().toLowerCase());
+                    }
+                }
+
+                // Remove the pending entry from current room
+                if (flex.pendingEntries && flex.pendingEntries[currentRoom]) {
+                    flex.pendingEntries[currentRoom] = flex.pendingEntries[currentRoom].filter(it => it !== entry);
+                }
+
+                saveDataToStorage();
+                renderFlexBarcodeRows();
+            }
+
+            // Listen for blur/change to trigger commit
+            bcInput.addEventListener('blur', commitPending);
+            ecsInput.addEventListener('blur', commitPending);
+            bcInput.addEventListener('change', commitPending);
+            ecsInput.addEventListener('change', commitPending);
+
+            container.appendChild(row);
+        });
+    }
+
+    // Insert divider if there were any assigned or pending rows and unassigned list is not empty
+    if ((assignedBcs.length || (pendingList && pendingList.length)) && (flex.unassignedBarcodes || []).length) {
         const divider = document.createElement('div');
         divider.className = 'section-divider';
         container.appendChild(divider);
     }
-
     // --- UNASSIGNED POOL (visible only in current room) ---
     const pool = flex.unassignedBarcodes || [];
-    if (!pool.length) {
+    // If there are no unassigned barcodes and no pending entries, show an "All assigned" message
+    if (!pool.length && (!pendingList || !pendingList.length)) {
         const empty = document.createElement('div');
         empty.className = 'grid-row';
         empty.innerHTML = '<div class="grid-cell">All barcodes have been assigned.</div>';
@@ -4642,9 +4862,7 @@ function renderFlexBarcodeRows() {
             }
         }
 
-        // Export only the room access status (Access / No Access) as a separate CSV file.
-        // This helper does not overwrite the existing flexible export and simply
-        // outputs a list of rooms with their corresponding status. The status
+        // Export only the room access status
         // labels are mapped from the internal keys stored in appState.roomStatus.
         function exportFlexRoomStatusToCsv() {
             try {
@@ -4658,8 +4876,6 @@ function renderFlexBarcodeRows() {
                         statusLabel = 'Access';
                     } else if (statusKey === 'no-access') {
                         statusLabel = 'No Access';
-                    } else if (statusKey === 'return') {
-                        statusLabel = 'Return';
                     }
                     csv += `"${room}","${statusLabel}"\n`;
                 });
