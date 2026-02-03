@@ -739,7 +739,7 @@
         align-items: stretch;
         margin-top: 10px;
         flex-direction: row;
-        justify-content: flex-end;
+        justify-content: space-between;
         gap: 10px;
         display: flex; /* visible only on phones */
     }
@@ -4869,7 +4869,7 @@ function updateFlexCounters() {
             // Add remaining codes marked as Remaining with empty comment
             (appState.assetTagz2.ecsPool || []).forEach(code => {
                 const room = appState.assetTagz2.ecsMap ? appState.assetTagz2.ecsMap[code] : '';
-                data.push({ code: code, room: room, status: 'Remaining', comment: '' });
+                data.push({ code: code, room: room, status: '', comment: '' });
             });
             let csv = 'ECS Code,Room,Status,Comment\n';
             data.forEach(item => {
