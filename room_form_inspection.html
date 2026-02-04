@@ -621,6 +621,9 @@
     padding: 8px 0;
 }
 
+
+/* Asset Tagz 2.0: show barcode counters during inspection */
+#assetTagz2CheckPage .flex-counter-panel { display: flex; }
 .flex-counter-card {
     min-width: 120px;
     padding: 6px 12px;
@@ -659,12 +662,14 @@
 
 /* Phone-only: show counters and stack under title */
 @media (max-width: 768px) {
-    #flexCheckPage .code-header {
+    #flexCheckPage .code-header,
+    #assetTagz2CheckPage .code-header {
         position: relative;
         padding-top: 0;
     }
 
-    #flexCheckPage .flex-counter-panel {
+    #flexCheckPage .flex-counter-panel,
+    #assetTagz2CheckPage .flex-counter-panel {
         position: static;
         width: 100%;
         align-items: stretch;
@@ -675,7 +680,8 @@
         display: flex; /* visible only on phones */
     }
 
-    #flexCheckPage .flex-counter-card {
+    #flexCheckPage .flex-counter-card,
+    #assetTagz2CheckPage .flex-counter-card {
         min-width: 0;
         flex: 0 0 auto;
         align-items: flex-start;
@@ -988,6 +994,34 @@
             background-color: #FFFFFF;
             box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
         }
+
+        /* Asset Tagz 2.0 barcode input */
+        .barcode-input {
+            width: 100%;
+            height: 44px;
+            padding: 0 12px;
+            border: 1px solid #D1D1D6;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            box-sizing: border-box;
+            background-color: #F8F9FA;
+            color: #1C1C1E;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+            appearance: none;
+            line-height: 44px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .barcode-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
 
         /* Room status buttons */
         .room-status-buttons {
@@ -1461,7 +1495,18 @@
                 border-radius: 10px;
             }
         }
-    </style>
+    
+/* Hide dropdown editors ONLY on mobile phones */
+@media (max-width: 480px) {
+  .dropdown-edit-panel,
+  .status-edit-panel,
+  .comment-edit-panel,
+  .edit-dropdown-section {
+    display: none !important;
+  }
+}
+
+</style>
 </head>
 <body>
     <div class="container">
@@ -1500,7 +1545,14 @@
                         </div>
                     </button>
     
-                    <button id="uploadJsonMainMenu" class="menu-button" style="background: linear-gradient(135deg, #f0932b 0%, #e67e22 100%); color: white;">
+                    
+                    <button id="assetTagz2Btn" class="menu-button" style="background: linear-gradient(135deg, #6f42c1 0%, #5a189a 100%); color: white;">
+                        Asset Tagz 2.0
+                        <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                            ECS inspection + Barcode dropdown
+                        </div>
+                    </button>
+<button id="uploadJsonMainMenu" class="menu-button" style="background: linear-gradient(135deg, #f0932b 0%, #e67e22 100%); color: white;">
                         Upload Inspection Data
                         <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8;">
                             Load a previous .json file
@@ -1584,6 +1636,73 @@ Room Codes (Room- Codes)
                     <button id="loadSavedCodeData" class="button secondary">Load Saved Data</button>
                     <button id="resetCodeApp" class="button danger">Reset Application</button>
                     <button id="backToMainMenuFromCode" class="button secondary">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        
+        <!-- Asset Tagz 2.0 Input Page (Copy of ECS + Barcode Presets) -->
+        <div id="assetTagz2InputPage" class="page">
+            <div class="card">
+                <div class="room-input-section">
+                    <label for="assetTagz2CodeList">Enter Room Codes:</label>
+                    <textarea
+                        id="assetTagz2CodeList"
+                        class="room-textarea"
+                        placeholder="Enter room codes in the format:
+Room Codes (Room- Codes)
+1HLF0000ZL- 1HLF01ST0000
+1HLF0001ZL- 1HLF10SV0000
+1HLF10ST0000
+1LHF10SE0000 
+..."
+                    ></textarea>
+                    <div class="help-text">
+                        Same logic as ECS Inspection. Each line can contain a room code followed by its associated codes, or just individual codes.
+                    </div>
+                </div>
+
+                <div class="room-input-section">
+                    <label for="assetTagz2BarcodePresets">Enter Barcodes (optional presets):</label>
+                    <textarea
+                        id="assetTagz2BarcodePresets"
+                        class="room-textarea"
+                        placeholder="Enter barcodes, one per line (these will be offered as a dropdown list during inspection)..."
+                    ></textarea>
+                    <div class="help-text">
+                        These barcodes will appear as a type-ahead dropdown on the inspection rows (to the right of the Comment dropdown).
+                        You can still type a barcode that is not in this list.
+                    </div>
+                </div>
+                <!-- Editable Dropdown Editors (Status + Comments) -->
+                <div class="dropdown-editor">
+                    <h3>Edit Status Dropdown Options</h3>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                        Edit the Status dropdown options <strong>before</strong> starting the inspection (same as ECS Inspection).
+                    </p>
+                    <div class="dropdown-editor-list" id="assetTagz2DropdownEditorList">
+                        <!-- Status dropdown options will be dynamically added here -->
+                    </div>
+                    <button id="addAssetTagz2DropdownOption" class="dropdown-editor-btn add">+ Add New Option</button>
+                </div>
+
+                <div class="dropdown-editor">
+                    <h3>Edit Comment Dropdown Options</h3>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                        Edit the predefined Comment options shown in the inspection. (Users can still choose Custom… and type their own.)
+                    </p>
+                    <div class="dropdown-editor-list" id="assetTagz2CommentDropdownEditorList">
+                        <!-- Comment dropdown options will be dynamically added here -->
+                    </div>
+                    <button id="addAssetTagz2CommentDropdownOption" class="dropdown-editor-btn add">+ Add New Comment Option</button>
+                </div>
+
+
+                <div class="action-buttons">
+                    <button id="startAssetTagz2Inspection" class="button">Start Inspection</button>
+                    <button id="loadSavedAssetTagz2Data" class="button secondary">Load Saved Data</button>
+                    <button id="resetAssetTagz2App" class="button danger">Reset Application</button>
+                    <button id="backToMainMenuFromAssetTagz2" class="button secondary">Back to Menu</button>
                 </div>
             </div>
         </div>
@@ -1686,6 +1805,58 @@ Room Codes (Room- Codes)
                 </div>
             </div>
         </div>
+
+        
+        <!-- Asset Tagz 2.0 Check Page (ECS + Barcode dropdown) -->
+        <div id="assetTagz2CheckPage" class="page">
+            <div class="card">
+                <div class="code-header">
+                    <h2 id="assetTagz2CurrentRoomTitle" class="code-title">Room: 1HLF0104ZL</h2>
+                    <!-- Barcode counters (Asset Tagz style) -->
+                    <div class="flex-counter-panel" id="assetTagz2BarcodeCounterPanel" style="margin-top:10px;">
+                        <div class="flex-counter-card total">
+                            <div class="label">Left</div>
+                            <div class="value" id="assetTagz2BarcodesLeft">0</div>
+                        </div>
+                        <div class="flex-counter-card assigned">
+                            <div class="label">Assigned</div>
+                            <div class="value" id="assetTagz2BarcodesAssigned">0</div>
+                        </div>
+                    </div>
+
+                    <div id="assetTagz2RoomSelect" class="custom-dropdown">
+                        <button class="custom-dropdown-button" type="button">
+                            <span class="custom-dropdown-text">Select Room</span>
+                            <span class="custom-dropdown-arrow">▼</span>
+                        </button>
+                        <div class="custom-dropdown-options"></div>
+                    </div>
+                    <div class="room-status-buttons">
+                        <button id="assetTagz2NoAccessBtn" class="status-btn no-access">No Access</button>
+                        <button id="assetTagz2CompletedBtn" class="status-btn completed">Access</button>
+                    </div>
+                    <div id="assetTagz2ProgressInfo" class="progress-info">Room 1 of 5</div>
+                    <div class="progress-bar">
+                        <div id="assetTagz2ProgressFill" class="progress-fill" style="width: 20%"></div>
+                    </div>
+                </div>
+
+                <div id="assetTagz2ChecksContainer" class="code-inspection-grid">
+                    <!-- Code rows will be inserted here by JavaScript -->
+                </div>
+
+                <div class="navigation">
+                    <button id="prevAssetTagz2Room" class="button nav-button secondary">Previous Room</button>
+                    <button id="nextAssetTagz2Room" class="button nav-button">Next Room</button>
+                </div>
+                <div class="action-buttons">
+                    <button id="exportAssetTagz2Csv" class="button success">Export to CSV</button>
+                    <button id="downloadJsonAssetTagz2" class="button warning">Download Data (JSON)</button>
+                    <button id="backToAssetTagz2Input" class="button secondary">Back to Input</button>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Room SE/ST/SV Check Page -->
         <div id="roomSeStSvCheckPage" class="page">
@@ -1846,6 +2017,7 @@ Room Codes (Room- Codes)
                 </div>
                 <div class="action-buttons">
                     <button id="flexExportCsv" class="button success">Export to CSV</button>
+                    <button id="flexExportRoomStatus" class="button success">Export Room Status</button>
                     <button id="flexDownloadJson" class="button warning">Download Data (JSON)</button>
                     <button id="flexUploadBarcodes" class="button">Upload Barcodes JSON</button>
                     <button id="backToFlexInput" class="button secondary">Back to Input</button>
@@ -1982,7 +2154,18 @@ Room Codes (Room- Codes)
       /* iOS vertical/touch optimizations for new lock/load controls */
       .button.lock-btn { min-width: 44px; min-height: 44px; }
       #flexBarcodeContainer { overflow-x: hidden; }
-    </style>
+    
+/* Hide dropdown editors ONLY on mobile phones */
+@media (max-width: 480px) {
+  .dropdown-edit-panel,
+  .status-edit-panel,
+  .comment-edit-panel,
+  .edit-dropdown-section {
+    display: none !important;
+  }
+}
+
+</style>
 
     <style>
       /* iOS-style SVG padlocks that change color */
@@ -2014,7 +2197,18 @@ Room Codes (Room- Codes)
         fill: #34c759; /* iOS green */
       }
       .lock-btn:active { transform: scale(0.9); }
-    </style>
+    
+/* Hide dropdown editors ONLY on mobile phones */
+@media (max-width: 480px) {
+  .dropdown-edit-panel,
+  .status-edit-panel,
+  .comment-edit-panel,
+  .edit-dropdown-section {
+    display: none !important;
+  }
+}
+
+</style>
 
 <script>
         // Global variables
@@ -2043,7 +2237,15 @@ rooms: [],
             currentSeStSvRoomIndex: 0,
             seStSvData: {},
             customStatusOptions: [],
-            customCommentOptions: []
+            customCommentOptions: [],
+            assetTagz2: {
+                roomCodes: {},
+                currentRoomIndex: 0,
+                statusByCodeId: {},
+                commentsByCodeId: {},
+                barcodesByCodeId: {},
+                barcodePresets: []
+            }
         };
 
         // Default comment choices for ECS Inspection
@@ -2133,6 +2335,8 @@ rooms: [],
         const roomListTextarea = document.getElementById('roomList');
         const codeListTextarea = document.getElementById('codeList');
         const roomNumbersTextarea = document.getElementById('roomNumbers');
+        const assetTagz2CodeListTextarea = document.getElementById('assetTagz2CodeList');
+        const assetTagz2BarcodePresetsTextarea = document.getElementById('assetTagz2BarcodePresets');
 
         const flexRoomListTextarea = document.getElementById('flexRoomList');
 const flexBarcodeListTextarea = document.getElementById('flexBarcodeList');
@@ -2146,13 +2350,14 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
 
             const hasEA      = appState.rooms && appState.rooms.length > 0;
             const hasECS     = appState.roomCodes && Object.keys(appState.roomCodes).length > 0;
+            const hasAT2     = appState.assetTagz2 && appState.assetTagz2.roomCodes && Object.keys(appState.assetTagz2.roomCodes).length > 0;
             const hasFlex    = appState.flexibleInspections &&
                                (appState.flexibleInspections.rooms?.length > 0 ||
                                 appState.flexibleInspections.unassignedBarcodes?.length > 0);
             const hasSeStSv  = appState.seStSvRooms && appState.seStSvRooms.length > 0;
             
             // Check if we're in inspection mode and show appropriate page
-            if (appState.isInspectionMode || hasEA || hasECS || hasFlex || hasSeStSv) {
+            if (appState.isInspectionMode || hasEA || hasECS || hasAT2 || hasFlex || hasSeStSv) {
                 refreshUIFromState();
             } else {
                 showMainMenu();
@@ -2164,6 +2369,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('siteInspectionBtn').addEventListener('click', showRoomInputPage);
             document.getElementById('flexibleTrackingBtn').addEventListener('click', showFlexInputPage);
             document.getElementById('codeInspectionBtn').addEventListener('click', showCodeInputPage);
+            document.getElementById('assetTagz2Btn').addEventListener('click', showAssetTagz2InputPage);
             document.getElementById('roomSeStSvInspectionBtn').addEventListener('click', showRoomSeStSvInputPage);
             document.getElementById('uploadJsonMainMenu').addEventListener('click', () => showFileUploadModal());
 
@@ -2178,6 +2384,12 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('loadSavedCodeData').addEventListener('click', loadSavedData);
             document.getElementById('resetCodeApp').addEventListener('click', () => showResetModal('code'));
             document.getElementById('backToMainMenuFromCode').addEventListener('click', showMainMenu);
+
+            // Asset Tagz 2.0 input page buttons
+            document.getElementById('startAssetTagz2Inspection').addEventListener('click', startAssetTagz2Inspection);
+            document.getElementById('loadSavedAssetTagz2Data').addEventListener('click', loadSavedData);
+            document.getElementById('resetAssetTagz2App').addEventListener('click', () => showResetModal('assetTagz2'));
+            document.getElementById('backToMainMenuFromAssetTagz2').addEventListener('click', showMainMenu);
 
             // SE/ST/SV input page buttons
             document.getElementById('startSeStSvInspection').addEventListener('click', startSeStSvInspection);
@@ -2199,6 +2411,13 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('downloadJsonCodeCheckPage').addEventListener('click', downloadJsonData);
             document.getElementById('backToCodeInput').addEventListener('click', backToCodeInput);
 
+            // Asset Tagz 2.0 check page buttons
+            document.getElementById('prevAssetTagz2Room').addEventListener('click', () => navigateAssetTagz2Room(-1));
+            document.getElementById('nextAssetTagz2Room').addEventListener('click', () => navigateAssetTagz2Room(1));
+            document.getElementById('exportAssetTagz2Csv').addEventListener('click', exportAssetTagz2ToCsv);
+            document.getElementById('downloadJsonAssetTagz2').addEventListener('click', downloadJsonData);
+            document.getElementById('backToAssetTagz2Input').addEventListener('click', backToAssetTagz2Input);
+
             // SE/ST/SV check page buttons
             document.getElementById('prevSeStSvRoom').addEventListener('click', () => navigateSeStSvRoom(-1));
             document.getElementById('nextSeStSvRoom').addEventListener('click', () => navigateSeStSvRoom(1));
@@ -2211,6 +2430,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('completedBtn').addEventListener('click', () => setRoomStatus('completed'));
             document.getElementById('codeNoAccessBtn').addEventListener('click', () => setCodeRoomStatus('no-access'));
             document.getElementById('codeCompletedBtn').addEventListener('click', () => setCodeRoomStatus('completed'));
+            document.getElementById('assetTagz2NoAccessBtn').addEventListener('click', () => setAssetTagz2RoomStatus('no-access'));
+            document.getElementById('assetTagz2CompletedBtn').addEventListener('click', () => setAssetTagz2RoomStatus('completed'));
             document.getElementById('seStSvNoAccessBtn').addEventListener('click', () => setSeStSvRoomStatus('no-access'));
             document.getElementById('seStSvCompletedBtn').addEventListener('click', () => setSeStSvRoomStatus('completed'));
 
@@ -2240,6 +2461,18 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             // Dropdown editor buttons
             document.getElementById('addDropdownOption').addEventListener('click', addDropdownOption);
             document.getElementById('addCommentDropdownOption').addEventListener('click', addCommentDropdownOption);
+            // Asset Tagz 2.0 dropdown editor buttons (same underlying lists as ECS)
+            const at2AddStatusBtn = document.getElementById('addAssetTagz2DropdownOption');
+            if (at2AddStatusBtn) at2AddStatusBtn.addEventListener('click', () => {
+                addDropdownOption();
+                renderDropdownEditor('assetTagz2DropdownEditorList');
+            });
+
+            const at2AddCommentBtn = document.getElementById('addAssetTagz2CommentDropdownOption');
+            if (at2AddCommentBtn) at2AddCommentBtn.addEventListener('click', () => {
+                addCommentDropdownOption();
+                renderCommentDropdownEditor('assetTagz2CommentDropdownEditorList');
+            });
 
 
             // Custom dropdown setup
@@ -2255,6 +2488,14 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 updateCodeCheckPage();
                 generateCodeCheckItems();
                 updateCodeCheckStates();
+                saveDataToStorage();
+            });
+
+            setupCustomDropdown('assetTagz2RoomSelect', (index) => {
+                appState.assetTagz2.currentRoomIndex = index;
+                updateAssetTagz2CheckPage();
+                generateAssetTagz2CheckItems();
+                updateAssetTagz2CheckStates();
                 saveDataToStorage();
             });
 
@@ -2292,6 +2533,8 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('flexDownloadJson').addEventListener('click', downloadJsonData);
             document.getElementById('backToFlexInput').addEventListener('click', backToFlexInput);
             document.getElementById('flexUploadBarcodes').addEventListener('click', showFlexFileUploadModal);
+            // Export the room access status separately (does not override the main export)
+            document.getElementById('flexExportRoomStatus').addEventListener('click', exportFlexRoomStatusToCsv);
 
             // Flexible dropdown
             setupCustomDropdown('flexRoomSelect', (index) => {
@@ -2382,8 +2625,9 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
         }
 
         // Dropdown Editor Functions
-        function renderDropdownEditor() {
-            const editorList = document.getElementById('dropdownEditorList');
+        function renderDropdownEditor(elementId = 'dropdownEditorList') {
+            const editorList = document.getElementById(elementId);
+            if (!editorList) return;
             editorList.innerHTML = '';
 
             const options = getCodeStatusOptions();
@@ -2414,6 +2658,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             appState.customStatusOptions.push('New Option');
             saveDataToStorage();
             renderDropdownEditor();
+            renderDropdownEditor('assetTagz2DropdownEditorList');
         }
 
         function updateDropdownOption(event) {
@@ -2438,11 +2683,13 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             appState.customStatusOptions.splice(index, 1);
             saveDataToStorage();
             renderDropdownEditor();
+            renderDropdownEditor('assetTagz2DropdownEditorList');
         }
 
         // Comment Dropdown Editor Functions
-        function renderCommentDropdownEditor() {
-            const editorList = document.getElementById('commentDropdownEditorList');
+        function renderCommentDropdownEditor(elementId = 'commentDropdownEditorList') {
+            const editorList = document.getElementById(elementId);
+            if (!editorList) return;
             editorList.innerHTML = '';
 
             const options = getCommentOptions();
@@ -2473,6 +2720,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             appState.customCommentOptions.push('New Comment');
             saveDataToStorage();
             renderCommentDropdownEditor();
+            renderCommentDropdownEditor('assetTagz2CommentDropdownEditorList');
         }
 
         function updateCommentDropdownOption(event) {
@@ -2497,6 +2745,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             appState.customCommentOptions.splice(index, 1);
             saveDataToStorage();
             renderCommentDropdownEditor();
+            renderCommentDropdownEditor('assetTagz2CommentDropdownEditorList');
         }
 
 
@@ -2522,6 +2771,12 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             renderCommentDropdownEditor(); // Refresh comment dropdown editor
         }
 
+        function showAssetTagz2InputPage() {
+            showPage('assetTagz2InputPage');
+            renderDropdownEditor('assetTagz2DropdownEditorList');
+            renderCommentDropdownEditor('assetTagz2CommentDropdownEditorList');
+        }
+
         function showFlexInputPage() { 
             showPage('flexInputPage'); 
         }
@@ -2536,6 +2791,13 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
 
         function showCodeCheckPage() {
             showPage('codeCheckPage');
+        }
+
+        function showAssetTagz2CheckPage() {
+            // Ensure barcode pool/counters are correct when entering the page
+            rebuildAssetTagz2BarcodePool();
+            updateAssetTagz2BarcodeCounters();
+            showPage('assetTagz2CheckPage');
         }
 
         function showFlexCheckPage() { 
@@ -2635,6 +2897,11 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                         updateCodeCheckPage();
                         generateCodeCheckItems();
                         updateCodeCheckStates();
+                    } else if (dropdownId === 'assetTagz2RoomSelect') {
+                        appState.assetTagz2.currentRoomIndex = index;
+                        updateAssetTagz2CheckPage();
+                        generateAssetTagz2CheckItems();
+                        updateAssetTagz2CheckStates();
                     } else if (dropdownId === 'flexRoomSelect') {
                         appState.flexibleInspections.currentRoomIndex = index;
                         updateFlexCheckPage();
@@ -2675,10 +2942,57 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 }
             } catch (error) {
                 console.error('Failed to load data:', error);
+            } finally {
+                normalizeAppState();
+            }
+        }
+
+        /**
+         * Normalises appState to prevent UI handlers breaking mid-session.
+         * This is important because imported / saved JSON may miss nested defaults.
+         */
+        function normalizeAppState() {
+            // Ensure top-level containers exist
+            appState = appState || {};
+            appState.rooms = Array.isArray(appState.rooms) ? appState.rooms : [];
+            appState.currentRoomIndex = Number.isInteger(appState.currentRoomIndex) ? appState.currentRoomIndex : 0;
+            appState.checkData = (appState.checkData && typeof appState.checkData === 'object') ? appState.checkData : {};
+            appState.roomStatus = (appState.roomStatus && typeof appState.roomStatus === 'object') ? appState.roomStatus : {};
+            appState.roomCodes = (appState.roomCodes && typeof appState.roomCodes === 'object') ? appState.roomCodes : {};
+            appState.currentCodeRoomIndex = Number.isInteger(appState.currentCodeRoomIndex) ? appState.currentCodeRoomIndex : 0;
+            appState.codeSpecificComments = (appState.codeSpecificComments && typeof appState.codeSpecificComments === 'object') ? appState.codeSpecificComments : {};
+            appState.seStSvRooms = Array.isArray(appState.seStSvRooms) ? appState.seStSvRooms : [];
+            appState.currentSeStSvRoomIndex = Number.isInteger(appState.currentSeStSvRoomIndex) ? appState.currentSeStSvRoomIndex : 0;
+            appState.seStSvData = (appState.seStSvData && typeof appState.seStSvData === 'object') ? appState.seStSvData : {};
+            appState.customStatusOptions = Array.isArray(appState.customStatusOptions) ? appState.customStatusOptions : [];
+            appState.customCommentOptions = Array.isArray(appState.customCommentOptions) ? appState.customCommentOptions : [];
+
+            // Asset Tagz 2.0 nested defaults
+            if (!appState.assetTagz2 || typeof appState.assetTagz2 !== 'object') appState.assetTagz2 = {};
+            const at = appState.assetTagz2;
+            at.roomCodes = (at.roomCodes && typeof at.roomCodes === 'object') ? at.roomCodes : {};
+            at.currentRoomIndex = Number.isInteger(at.currentRoomIndex) ? at.currentRoomIndex : 0;
+            at.statusByCodeId = (at.statusByCodeId && typeof at.statusByCodeId === 'object') ? at.statusByCodeId : {};
+            at.commentsByCodeId = (at.commentsByCodeId && typeof at.commentsByCodeId === 'object') ? at.commentsByCodeId : {};
+            at.barcodesByCodeId = (at.barcodesByCodeId && typeof at.barcodesByCodeId === 'object') ? at.barcodesByCodeId : {};
+            at.barcodePresets = Array.isArray(at.barcodePresets) ? at.barcodePresets : [];
+            at.barcodePool = Array.isArray(at.barcodePool) ? at.barcodePool : null;
+            at.barcodePoolTotal = (typeof at.barcodePoolTotal === 'number') ? at.barcodePoolTotal : (at.barcodePresets.length || 0);
+
+            // Flexible tracking nested defaults (if present)
+            if (appState.flexibleInspections && typeof appState.flexibleInspections === 'object') {
+                const flex = appState.flexibleInspections;
+                flex.rooms = Array.isArray(flex.rooms) ? flex.rooms : [];
+                flex.currentRoomIndex = Number.isInteger(flex.currentRoomIndex) ? flex.currentRoomIndex : 0;
+                flex.unassignedBarcodes = Array.isArray(flex.unassignedBarcodes) ? flex.unassignedBarcodes : [];
+                flex.assignments = (flex.assignments && typeof flex.assignments === 'object') ? flex.assignments : {};
+                flex.locks = (flex.locks && typeof flex.locks === 'object') ? flex.locks : {};
+                flex.ecsPresets = Array.isArray(flex.ecsPresets) ? flex.ecsPresets : [];
             }
         }
 
         function refreshUIFromState() {
+            normalizeAppState();
             if (appState.rooms.length > 0) {
                 roomListTextarea.value = appState.rooms.join('\n');
                 generateCheckItems();
@@ -2698,6 +3012,25 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 showCodeCheckPage();
                 updateCodeCheckPage();
                 updateCodeCheckStates();
+
+            } else if (appState.assetTagz2 && Object.keys(appState.assetTagz2.roomCodes || {}).length > 0) {
+                // Rehydrate Asset Tagz 2.0 UI
+                let codeText = '';
+                const rc = appState.assetTagz2.roomCodes || {};
+                for (const room in rc) {
+                    if (rc[room] && rc[room].length > 0) {
+                        codeText += `${room}- ${rc[room].join(' ')}\n`;
+                    }
+                }
+                if (assetTagz2CodeListTextarea) assetTagz2CodeListTextarea.value = codeText;
+
+                const presets = (appState.assetTagz2.barcodePresets || []);
+                if (assetTagz2BarcodePresetsTextarea) assetTagz2BarcodePresetsTextarea.value = presets.join('\n');
+
+                generateAssetTagz2CheckItems();
+                showAssetTagz2CheckPage();
+                updateAssetTagz2CheckPage();
+                updateAssetTagz2CheckStates();
             } else if (appState.flexibleInspections && (appState.flexibleInspections.rooms.length > 0 || appState.flexibleInspections.unassignedBarcodes.length > 0)) {
                 // Rehydrate flexible tracking UI
                 showFlexCheckPage();
@@ -3057,6 +3390,617 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             showCodeCheckPage();
             updateCodeCheckPage();
         }
+
+
+        
+        function startAssetTagz2Inspection() {
+            const codeText = (assetTagz2CodeListTextarea ? assetTagz2CodeListTextarea.value : '').trim();
+            if (!codeText) {
+                showMessageModal('Input Required', 'Please enter room codes.');
+                return;
+            }
+
+            // Room recognition rule:
+            // - A room line is ONLY a token that ends with "ZL-" (e.g., 1HLF1026ZL-)
+            // - Codes may contain hyphens (e.g., 1DVL5309-05-176) and must NOT be treated as rooms
+            // - Supports tab-separated input where the first column is the room (or blank to repeat the previous room)
+            const roomCodes = {};
+            const roomPattern = /^-?[A-Z0-9-]+Z(?:L-|LE|A-|G-)$/i;
+            const lines = codeText.split('\n');
+            let currentRoom = null;
+
+            function addCodesToRoom(room, codesText) {
+                if (!codesText) return;
+                const codes = codesText.split(/\s+/).map(s => s.trim()).filter(Boolean);
+                if (codes.length === 0) return;
+                if (!roomCodes[room]) roomCodes[room] = [];
+                roomCodes[room] = roomCodes[room].concat(codes);
+            }
+
+            lines.forEach(rawLine => {
+                if (!rawLine) return;
+
+                // Keep tabs for 2-column data
+                const cols = rawLine.split('\t');
+                const col1 = (cols[0] ?? '').trim();
+                const col2 = cols.length > 1 ? cols.slice(1).join('\t').trim() : '';
+
+                // Case 1: first column is a room (ends with ZL-)
+                if (col1 && roomPattern.test(col1)) {
+                    currentRoom = col1;
+                    if (!roomCodes[currentRoom]) roomCodes[currentRoom] = [];
+                    addCodesToRoom(currentRoom, col2);
+                    return;
+                }
+
+                // Case 2: blank first column but codes exist in second column -> same room as previous
+                if (!col1 && col2) {
+                    const room = currentRoom || 'Unassigned';
+                    addCodesToRoom(room, col2);
+                    return;
+                }
+
+                // Case 3: single-column lines (or first col used as the token)
+                const token = col1 || col2 || '';
+                if (!token) return;
+
+                // If the token itself is a room header, switch current room
+                if (roomPattern.test(token)) {
+                    currentRoom = token;
+                    if (!roomCodes[currentRoom]) roomCodes[currentRoom] = [];
+                    return;
+                }
+
+                // Otherwise treat as code(s) for current room / unassigned
+                const room = currentRoom || 'Unassigned';
+                addCodesToRoom(room, token);
+            });
+
+            // Barcode preset list (for dropdown type-ahead)
+            const bcText = (assetTagz2BarcodePresetsTextarea ? assetTagz2BarcodePresetsTextarea.value : '').trim();
+            let presets = bcText ? bcText.split('\n').map(s => s.trim()).filter(Boolean) : [];
+if (presets.length) {
+                const seen = new Set();
+                presets = presets.filter(bc => {
+                    const key = String(bc).trim().toLowerCase();
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            }
+
+            appState.assetTagz2 = appState.assetTagz2 || { roomCodes: {}, currentRoomIndex: 0, statusByCodeId: {}, commentsByCodeId: {}, barcodesByCodeId: {}, barcodePresets: [] };
+            appState.assetTagz2.roomCodes = roomCodes;
+            appState.assetTagz2.currentRoomIndex = 0;
+            appState.assetTagz2.statusByCodeId = {};
+            appState.assetTagz2.commentsByCodeId = {};
+            appState.assetTagz2.barcodesByCodeId = {};
+            appState.assetTagz2.barcodePresets = presets;
+            appState.assetTagz2.barcodePoolTotal = presets.length;
+            appState.assetTagz2.barcodePool = presets.slice();
+
+            appState.isInspectionMode = true;
+
+            // Initialize per-code storage
+            for (const room in roomCodes) {
+                (roomCodes[room] || []).forEach(code => {
+                    const codeId = `${room}-${code}`;
+                    appState.assetTagz2.statusByCodeId[codeId] = null; // status index
+                    appState.assetTagz2.commentsByCodeId[codeId] = '';
+                    appState.assetTagz2.barcodesByCodeId[codeId] = '';
+                });
+            }
+
+            saveDataToStorage();
+            generateAssetTagz2CheckItems();
+            showAssetTagz2CheckPage();
+            updateAssetTagz2CheckPage();
+            updateAssetTagz2CheckStates();
+        }
+
+        function updateAssetTagz2CheckPage() {
+            const at = appState.assetTagz2 || {};
+            const roomNames = Object.keys(at.roomCodes || {});
+            if (!roomNames.length) return;
+
+            const currentRoom = roomNames[at.currentRoomIndex];
+            document.getElementById('assetTagz2CurrentRoomTitle').textContent = `Room: ${currentRoom}`;
+
+            // Keep barcode pool UI in sync across room navigation
+            getAssetTagz2BarcodePresetsListId();
+            updateAssetTagz2BarcodeCounters();
+
+            document.getElementById('assetTagz2ProgressInfo').textContent = `Room ${at.currentRoomIndex + 1} of ${roomNames.length}`;
+            const progressPercent = ((at.currentRoomIndex + 1) / roomNames.length) * 100;
+            document.getElementById('assetTagz2ProgressFill').style.width = `${progressPercent}%`;
+
+            updateCustomDropdownOptions('assetTagz2RoomSelect', roomNames, at.currentRoomIndex);
+            updateAssetTagz2RoomSelectColor();
+
+            const prevBtn = document.getElementById('prevAssetTagz2Room');
+            const nextBtn = document.getElementById('nextAssetTagz2Room');
+            prevBtn.disabled = at.currentRoomIndex === 0;
+            nextBtn.textContent = (at.currentRoomIndex === roomNames.length - 1) ? 'Complete' : 'Next Room';
+        }
+
+        function updateAssetTagz2RoomSelectColor() {
+            const at = appState.assetTagz2 || {};
+            const roomNames = Object.keys(at.roomCodes || {});
+            const currentRoom = roomNames[at.currentRoomIndex];
+            if (!currentRoom) return;
+            const status = (appState.roomStatus || {})[currentRoom];
+            updateCustomDropdownColor('assetTagz2RoomSelect', status);
+        }
+
+        function setAssetTagz2RoomStatus(status) {
+            const at = appState.assetTagz2 || {};
+            const roomNames = Object.keys(at.roomCodes || {});
+            const currentRoom = roomNames[at.currentRoomIndex];
+            if (!currentRoom) return;
+            appState.roomStatus = appState.roomStatus || {};
+            appState.roomStatus[currentRoom] = status;
+            saveDataToStorage();
+            updateAssetTagz2RoomSelectColor();
+            updateCustomDropdownOptions('assetTagz2RoomSelect', roomNames, at.currentRoomIndex);
+        }
+
+        function getAssetTagz2BarcodePresetsListId() {
+            const at = appState.assetTagz2 || {};
+            // Prefer the remaining pool (so used barcodes disappear), fallback to presets
+            const list = Array.isArray(at.barcodePool) ? at.barcodePool : (Array.isArray(at.barcodePresets) ? at.barcodePresets : []);
+            let dl = document.getElementById('assetTagz2BarcodePresetsList');
+            if (!dl) {
+                dl = document.createElement('datalist');
+                dl.id = 'assetTagz2BarcodePresetsList';
+                document.body.appendChild(dl);
+            }
+            dl.innerHTML = '';
+            list.forEach(bc => {
+                const opt = document.createElement('option');
+                opt.value = bc;
+                dl.appendChild(opt);
+            });
+            return dl.id;
+        }
+
+        /**
+         * Rebuild barcode pool based on presets minus any already-assigned barcodes.
+         * Keeps barcodes unique across the whole inspection.
+         */
+        function rebuildAssetTagz2BarcodePool() {
+            const at = appState.assetTagz2 || {};
+            const presets = Array.isArray(at.barcodePresets) ? at.barcodePresets : [];
+            const total = (typeof at.barcodePoolTotal === 'number') ? at.barcodePoolTotal : presets.length;
+            at.barcodePoolTotal = total;
+
+            const assigned = new Set();
+            if (at.barcodesByCodeId) {
+                Object.values(at.barcodesByCodeId).forEach(v => {
+                    const val = (v || '').trim();
+                    if (!val) return;
+                    // Only enforce uniqueness for items that belong to the original presets
+                    if (presets.some(p => String(p).toLowerCase() === val.toLowerCase())) {
+                        assigned.add(val.toLowerCase());
+                    }
+                });
+            }
+
+            // Pool is presets excluding assigned
+            at.barcodePool = presets.filter(bc => !assigned.has(String(bc).toLowerCase()));
+        }
+
+        function updateAssetTagz2BarcodeCounters() {
+            const at = appState.assetTagz2 || {};
+            const total = (typeof at.barcodePoolTotal === 'number') ? at.barcodePoolTotal : (Array.isArray(at.barcodePresets) ? at.barcodePresets.length : 0);
+            const left = Array.isArray(at.barcodePool) ? at.barcodePool.length : 0;
+            const assigned = Math.max(0, total - left);
+
+            const leftEl = document.getElementById('assetTagz2BarcodesLeft');
+            const assignedEl = document.getElementById('assetTagz2BarcodesAssigned');
+            if (leftEl) leftEl.textContent = String(left);
+            if (assignedEl) assignedEl.textContent = String(assigned);
+        }
+
+        
+        function assetTagz2CommitBarcodeSelection(codeId, newValue, inputEl) {
+            try {
+                // Defensive: barcode edits must never break the UI.
+                // Normalise state in case a prior save/import removed nested defaults.
+                normalizeAppState();
+
+                if (!appState.assetTagz2 || typeof appState.assetTagz2 !== 'object') {
+                    appState.assetTagz2 = { roomCodes: {}, currentRoomIndex: 0, statusByCodeId: {}, commentsByCodeId: {}, barcodesByCodeId: {}, barcodePresets: [] };
+                }
+                const at = appState.assetTagz2;
+                at.barcodesByCodeId = (at.barcodesByCodeId && typeof at.barcodesByCodeId === 'object') ? at.barcodesByCodeId : {};
+                at.barcodePresets = Array.isArray(at.barcodePresets) ? at.barcodePresets : [];
+
+                // Ensure barcode pool exists (if missing, rebuild from presets)
+                if (!Array.isArray(at.barcodePool)) {
+                    at.barcodePoolTotal = (typeof at.barcodePoolTotal === 'number') ? at.barcodePoolTotal : at.barcodePresets.length;
+                    rebuildAssetTagz2BarcodePool();
+                }
+
+                const presets = at.barcodePresets;
+                let pool = Array.isArray(at.barcodePool) ? at.barcodePool.slice() : [];
+                const norm = (s) => String(s || '').trim();
+                const normLower = (s) => norm(s).toLowerCase();
+
+                const prev = norm(at.barcodesByCodeId[codeId] || '');
+                const next = norm(newValue);
+
+                // If nothing changed, do nothing
+                if (prev === next) return;
+
+                const prevIsPreset = prev && presets.some(p => normLower(p) === normLower(prev));
+                const nextIsPreset = next && presets.some(p => normLower(p) === normLower(next));
+
+                // If switching away from a preset barcode, put it back in the pool
+                if (prevIsPreset) {
+                    const exists = pool.some(p => normLower(p) === normLower(prev));
+                    if (!exists) {
+                        pool.push(prev);
+                    }
+                }
+
+                // If selecting a preset barcode: must be available in pool
+                if (nextIsPreset) {
+                    const idx = pool.findIndex(p => normLower(p) === normLower(next));
+                    if (idx === -1) {
+                        // Already used somewhere else – revert
+                        showMessageModal('Barcode already used', `“${next}” has already been assigned. Please pick another barcode.`);
+                        if (inputEl) inputEl.value = prev || '';
+                        at.barcodesByCodeId[codeId] = prev || '';
+                        rebuildAssetTagz2BarcodePool();
+                        getAssetTagz2BarcodePresetsListId();
+                        updateAssetTagz2BarcodeCounters();
+                        saveDataToStorage();
+                        return;
+                    }
+                    // Remove from pool
+                    pool.splice(idx, 1);
+                }
+
+                // Commit new value
+                at.barcodesByCodeId[codeId] = next;
+
+                // Store pool and then recompute it from truth (presets minus assigned) to avoid drift
+                at.barcodePool = pool;
+                rebuildAssetTagz2BarcodePool();
+
+                // Ensure the UI suggestions + counters stay correct across rooms
+                getAssetTagz2BarcodePresetsListId();
+                updateAssetTagz2BarcodeCounters();
+
+                saveDataToStorage();
+            } catch (err) {
+                console.error('Barcode commit failed (recovered):', err);
+                // Last resort recovery: normalise state and keep UI usable
+                try {
+                    normalizeAppState();
+                    rebuildAssetTagz2BarcodePool();
+                    getAssetTagz2BarcodePresetsListId();
+                    updateAssetTagz2BarcodeCounters();
+                    saveDataToStorage();
+                } catch (e2) {
+                    console.error('Barcode commit recovery failed:', e2);
+                }
+            }
+        }
+
+        function generateAssetTagz2CheckItems() {
+            const checksContainer = document.getElementById('assetTagz2ChecksContainer');
+            checksContainer.innerHTML = '';
+
+            const at = appState.assetTagz2 || {};
+            const roomNames = Object.keys(at.roomCodes || {});
+            if (!roomNames.length) return;
+
+            const currentRoomName = roomNames[at.currentRoomIndex];
+            const codesForCurrentRoom = (at.roomCodes[currentRoomName] || []);
+
+            const codeStatusOptions = getCodeStatusOptions();
+            const commentOptions = getCommentOptions();
+            const barcodeListId = getAssetTagz2BarcodePresetsListId();
+
+            codesForCurrentRoom.forEach(code => {
+                const codeId = `${currentRoomName}-${code}`;
+
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'grid-row';
+
+                // Code cell
+                const codeCell = document.createElement('div');
+                codeCell.className = 'grid-cell code-cell';
+                codeCell.textContent = code;
+                rowDiv.appendChild(codeCell);
+
+                // Controls cell
+                const controlsCell = document.createElement('div');
+                controlsCell.className = 'grid-cell controls-cell';
+
+                const controlsRow = document.createElement('div');
+                controlsRow.className = 'controls-row';
+
+                // Status wrapper (same as ECS)
+                const statusWrapper = document.createElement('div');
+                statusWrapper.className = 'control-wrapper';
+                statusWrapper.style.position = 'relative';
+
+                const statusLabel = document.createElement('div');
+                statusLabel.className = 'control-label';
+                statusLabel.textContent = 'Status';
+                statusWrapper.appendChild(statusLabel);
+
+                const statusButton = document.createElement('button');
+                statusButton.className = 'status-button';
+                statusButton.textContent = 'Select Status';
+                statusButton.dataset.codeId = codeId;
+                statusButton.addEventListener('click', toggleAssetTagz2StatusOptions);
+                statusWrapper.appendChild(statusButton);
+
+                const statusOptions = document.createElement('div');
+                statusOptions.className = 'status-options';
+                statusOptions.dataset.codeId = codeId;
+
+                codeStatusOptions.forEach((status, index) => {
+                    const option = document.createElement('div');
+                    option.className = 'status-option';
+                    option.textContent = status;
+                    option.dataset.codeId = codeId;
+                    option.dataset.statusIndex = index;
+                    option.addEventListener('click', selectAssetTagz2Status);
+                    statusOptions.appendChild(option);
+                });
+
+                statusWrapper.appendChild(statusOptions);
+                controlsRow.appendChild(statusWrapper);
+
+                // Comment wrapper (same as ECS)
+                const commentWrapper = document.createElement('div');
+                commentWrapper.className = 'control-wrapper comment-section';
+
+                const commentLabel = document.createElement('div');
+                commentLabel.className = 'control-label';
+                commentLabel.textContent = 'Comment';
+                commentWrapper.appendChild(commentLabel);
+
+                const commentSelect = document.createElement('select');
+                commentSelect.className = 'comment-textarea';
+                commentSelect.dataset.codeId = codeId;
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select comment...';
+                commentSelect.appendChild(defaultOption);
+
+                commentOptions.forEach(choice => {
+                    const option = document.createElement('option');
+                    option.value = choice;
+                    option.textContent = choice;
+                    commentSelect.appendChild(option);
+                });
+
+                const customOption = document.createElement('option');
+                customOption.value = '__custom__';
+                customOption.textContent = 'Custom...';
+                commentSelect.appendChild(customOption);
+
+                commentWrapper.appendChild(commentSelect);
+
+                const customInput = document.createElement('textarea');
+                customInput.className = 'custom-comment-input';
+                customInput.dataset.codeId = codeId;
+                customInput.placeholder = 'Enter your custom comment here...';
+                customInput.rows = 2;
+
+                commentSelect.addEventListener('change', function(event) {
+                    const selectedValue = event.target.value;
+                    if (selectedValue === '__custom__') {
+                        customInput.classList.add('show');
+                        customInput.focus();
+                    } else {
+                        customInput.classList.remove('show');
+                        customInput.value = '';
+                        at.commentsByCodeId[codeId] = selectedValue;
+                        saveDataToStorage();
+                    }
+                });
+
+                customInput.addEventListener('input', function(event) {
+                    at.commentsByCodeId[codeId] = event.target.value;
+                    saveDataToStorage();
+                });
+
+                commentWrapper.appendChild(customInput);
+                controlsRow.appendChild(commentWrapper);
+
+                // Barcode wrapper (NEW) - to the right of Comment
+                const barcodeWrapper = document.createElement('div');
+                barcodeWrapper.className = 'control-wrapper';
+
+                const barcodeLabel = document.createElement('div');
+                barcodeLabel.className = 'control-label';
+                barcodeLabel.textContent = 'Barcode';
+                barcodeWrapper.appendChild(barcodeLabel);
+
+                const barcodeInput = document.createElement('input');
+                barcodeInput.type = 'text';
+                barcodeInput.className = 'barcode-input';
+                barcodeInput.placeholder = 'Type or select...';
+                barcodeInput.setAttribute('autocomplete','off');
+                barcodeInput.dataset.codeId = codeId;
+                barcodeInput.setAttribute('list', barcodeListId);
+
+                // Commit barcode selection (updates pool + counters). Do NOT write to appState on every keystroke,
+// otherwise prev==next and the pool/counters never update.
+const commitBarcode = (el) => assetTagz2CommitBarcodeSelection(codeId, el.value, el);
+
+barcodeInput.addEventListener('change', function(e) {
+    commitBarcode(e.target);
+});
+
+// Many browsers don't reliably fire 'change' for datalist picks until blur,
+// so we also commit on blur and Enter.
+barcodeInput.addEventListener('blur', function(e) {
+    commitBarcode(e.target);
+});
+
+barcodeInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        commitBarcode(e.target);
+        e.target.blur();
+    }
+});
+barcodeWrapper.appendChild(barcodeInput);
+                controlsRow.appendChild(barcodeWrapper);
+
+                controlsCell.appendChild(controlsRow);
+                rowDiv.appendChild(controlsCell);
+
+                checksContainer.appendChild(rowDiv);
+            });
+        }
+
+        function toggleAssetTagz2StatusOptions(event) {
+            event.stopPropagation();
+            const codeId = event.target.dataset.codeId;
+            const statusOptions = document.querySelector(`#assetTagz2ChecksContainer .status-options[data-code-id="${codeId}"]`);
+
+            document.querySelectorAll('#assetTagz2ChecksContainer .status-options').forEach(options => {
+                if (options !== statusOptions) options.classList.remove('active');
+            });
+
+            if (statusOptions) statusOptions.classList.toggle('active');
+        }
+
+        function selectAssetTagz2Status(event) {
+            const at = appState.assetTagz2 || {};
+            const codeId = event.target.dataset.codeId;
+            const statusIndex = parseInt(event.target.dataset.statusIndex);
+            const statusText = event.target.textContent;
+
+            at.statusByCodeId[codeId] = statusIndex;
+
+            const statusButton = document.querySelector(`#assetTagz2ChecksContainer .status-button[data-code-id="${codeId}"]`);
+            if (statusButton) {
+                statusButton.textContent = statusText;
+                statusButton.classList.add('selected');
+            }
+
+            const statusOptions = document.querySelector(`#assetTagz2ChecksContainer .status-options[data-code-id="${codeId}"]`);
+            if (statusOptions) statusOptions.classList.remove('active');
+
+            saveDataToStorage();
+        }
+
+        function updateAssetTagz2CheckStates() {
+            const at = appState.assetTagz2 || {};
+            const roomNames = Object.keys(at.roomCodes || {});
+            if (!roomNames.length) return;
+
+            const currentRoomName = roomNames[at.currentRoomIndex];
+            const codesForCurrentRoom = (at.roomCodes[currentRoomName] || []);
+            const codeStatusOptions = getCodeStatusOptions();
+            const commentOptions = getCommentOptions();
+
+            // Ensure datalist exists
+            const barcodeListId = getAssetTagz2BarcodePresetsListId();
+
+            codesForCurrentRoom.forEach(code => {
+                const codeId = `${currentRoomName}-${code}`;
+
+                const statusIndex = at.statusByCodeId[codeId];
+                const comment = at.commentsByCodeId[codeId] || '';
+                const barcode = at.barcodesByCodeId[codeId] || '';
+
+                const statusButton = document.querySelector(`#assetTagz2ChecksContainer .status-button[data-code-id="${codeId}"]`);
+                if (statusButton) {
+                    if (statusIndex !== null && statusIndex !== undefined) {
+                        statusButton.textContent = codeStatusOptions[statusIndex];
+                        statusButton.classList.add('selected');
+                    } else {
+                        statusButton.textContent = 'Select Status';
+                        statusButton.classList.remove('selected');
+                    }
+                }
+
+                const commentSelect = document.querySelector(`#assetTagz2ChecksContainer .comment-textarea[data-code-id="${codeId}"]`);
+                const customInput = document.querySelector(`#assetTagz2ChecksContainer .custom-comment-input[data-code-id="${codeId}"]`);
+                if (commentSelect && customInput) {
+                    const matchingChoice = commentOptions.find(choice => choice === comment);
+                    if (matchingChoice) {
+                        commentSelect.value = matchingChoice;
+                        customInput.classList.remove('show');
+                        customInput.value = '';
+                    } else if (comment) {
+                        commentSelect.value = '__custom__';
+                        customInput.classList.add('show');
+                        customInput.value = comment;
+                    } else {
+                        commentSelect.value = '';
+                        customInput.classList.remove('show');
+                        customInput.value = '';
+                    }
+                }
+
+                const barcodeInput = document.querySelector(`#assetTagz2ChecksContainer .barcode-input[data-code-id="${codeId}"]`);
+                if (barcodeInput) {
+                    barcodeInput.value = barcode;
+                    barcodeInput.setAttribute('list', barcodeListId);
+                }
+            });
+        }
+
+        function navigateAssetTagz2Room(direction) {
+            const at = appState.assetTagz2 || {};
+            const roomNames = Object.keys(at.roomCodes || {});
+            const newIndex = at.currentRoomIndex + direction;
+
+            if (newIndex >= 0 && newIndex < roomNames.length) {
+                at.currentRoomIndex = newIndex;
+                updateAssetTagz2CheckPage();
+                generateAssetTagz2CheckItems();
+                updateAssetTagz2CheckStates();
+                saveDataToStorage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (newIndex >= roomNames.length) {
+                showCompletionPage_ECS(); // reuse the same completion screen style
+            }
+        }
+
+        function backToAssetTagz2Input() {
+            appState.isInspectionMode = false;
+            saveDataToStorage();
+            showAssetTagz2InputPage();
+        }
+
+        function exportAssetTagz2ToCsv() {
+            try {
+                const at = appState.assetTagz2 || {};
+                const rc = at.roomCodes || {};
+                const codeStatusOptions = getCodeStatusOptions();
+                let csvContent = 'Room,Code,Status,Comment,Barcode\n';
+
+                for (const room in rc) {
+                    (rc[room] || []).forEach(code => {
+                        const codeId = `${room}-${code}`;
+                        const statusIndex = at.statusByCodeId ? at.statusByCodeId[codeId] : null;
+                        const status = (statusIndex !== null && statusIndex !== undefined) ? (codeStatusOptions[statusIndex] || '') : '';
+                        const comment = (at.commentsByCodeId && at.commentsByCodeId[codeId]) ? at.commentsByCodeId[codeId] : '';
+                        const barcode = (at.barcodesByCodeId && at.barcodesByCodeId[codeId]) ? at.barcodesByCodeId[codeId] : '';
+                        csvContent += `"${room}","${code}","${status}","${String(comment).replace(/"/g, '""')}","${String(barcode).replace(/"/g, '""')}"\n`;
+                    });
+                }
+
+                downloadCsvFile(csvContent, `asset_tagz_2_0_${new Date().toISOString().split('T')[0]}.csv`);
+            } catch (error) {
+                console.error('Export failed:', error);
+                showMessageModal('Export Failed', 'Failed to export data. Please try again.');
+            }
+        }
+
 
         function startSeStSvInspection() {
             const roomText = roomNumbersTextarea.value.trim();
@@ -3715,6 +4659,10 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 appState.roomCodes = {};
                 appState.codeSpecificComments = {};
                 codeListTextarea.value = '';
+            } else if (type === 'assetTagz2') {
+                appState.assetTagz2 = { roomCodes: {}, currentRoomIndex: 0, statusByCodeId: {}, commentsByCodeId: {}, barcodesByCodeId: {}, barcodePresets: [] };
+                if (typeof assetTagz2CodeListTextarea !== 'undefined' && assetTagz2CodeListTextarea) assetTagz2CodeListTextarea.value = '';
+                if (typeof assetTagz2BarcodePresetsTextarea !== 'undefined' && assetTagz2BarcodePresetsTextarea) assetTagz2BarcodePresetsTextarea.value = '';
             } else if (type === 'flex') {
                 appState.flexibleInspections = {
                     rooms: [], currentRoomIndex: 0, unassignedBarcodes: [], assignments: {}, inspections: [], ecsPresets: [], locks: {}, poolVisibleCount: 10, isFlexibleMode: false
@@ -3776,8 +4724,10 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                         seStSvData: {},
                         customStatusOptions: [],
                         customCommentOptions: [],
+                        assetTagz2: { roomCodes: {}, currentRoomIndex: 0, statusByCodeId: {}, commentsByCodeId: {}, barcodesByCodeId: {}, barcodePresets: [] },
                         ...data
                     };
+                    normalizeAppState();
                     saveDataToStorage();
                     hideFileUploadModal();
                     refreshUIFromState();
@@ -4580,10 +5530,37 @@ function renderFlexBarcodeRows() {
                 (flex.unassignedBarcodes || []).forEach(bc => {
                     csv += `"${bc}","",""\n`;
                 });
-                downloadCsvFile(csv, `flexible_tracking_${new Date().toISOString().split('T')[0]}.csv`);
+                downloadCsvFile(csv, `assets_tagz_${new Date().toISOString().split('T')[0]}.csv`);
             } catch (err) {
                 console.error(err);
                 showMessageModal('Export Failed', 'Failed to export flexible data.');
+            }
+        }
+
+        // Export only the room access status (Access / No Access) as a separate CSV file.
+        // This helper does not overwrite the existing flexible export and simply
+        // outputs a list of rooms with their corresponding status. The status
+        // labels are mapped from the internal keys stored in appState.roomStatus.
+        function exportFlexRoomStatusToCsv() {
+            try {
+                let csv = 'Room,Status\n';
+                const flex = appState.flexibleInspections;
+                const rooms = flex.rooms || [];
+                rooms.forEach(room => {
+                    let statusKey = (appState.roomStatus || {})[room] || '';
+                    let statusLabel = '';
+                    if (statusKey === 'completed') {
+                        statusLabel = 'Access';
+                    } else if (statusKey === 'no-access') {
+                        statusLabel = 'No Access';
+                    }
+                    csv += `"${room}","${statusLabel}"\n`;
+                });
+                // Use a unique filename so it does not conflict with the main export
+                downloadCsvFile(csv, `room_status_${new Date().toISOString().split('T')[0]}.csv`);
+            } catch (err) {
+                console.error(err);
+                showMessageModal('Export Failed', 'Failed to export room statuses.');
             }
         }
 
