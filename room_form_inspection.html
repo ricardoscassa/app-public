@@ -933,6 +933,7 @@
         }
 
         .comment-textarea {
+            /* match the status button height but avoid clipping text on small screens */
             width: 100%;
             height: 44px;
             padding: 0 12px;
@@ -949,7 +950,7 @@
             /* iOS optimizations */
             -webkit-appearance: none;
             appearance: none;
-            line-height: 44px;
+            /* Do not set a fixed line-height here to prevent text clipping */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -1426,9 +1427,13 @@
             }
 
             .comment-textarea {
-                min-height: 44px; /* Larger touch target for iOS */
+                /* Use min-height instead of fixed height for better vertical alignment on small screens */
+                min-height: 44px;
                 font-size: 16px; /* Prevent zoom on iOS */
                 padding: 10px;
+                /* Reset line-height so text is not clipped */
+                line-height: normal;
+                height: auto;
             }
         }
         
@@ -1507,6 +1512,35 @@
 }
 
 </style>
+
+    <!-- Responsive layout adjustments for Asset Tagz 2.0 -->
+    <style>
+      /* On small screens, wrap the controls row and place the barcode input below the comment dropdown for Asset Tagz 2.0 inspections */
+      @media (max-width: 768px) {
+        /* Ensure the status/comment wrappers can wrap to a new line */
+        #assetTagz2CheckPage .controls-row {
+          flex-wrap: wrap;
+        }
+        /* Make status and comment share the first row equally */
+        #assetTagz2CheckPage .controls-row .control-wrapper {
+          flex: 1 1 50%;
+        }
+        /* Force the barcode wrapper onto its own row with full width */
+        #assetTagz2CheckPage .controls-row .control-wrapper:last-child {
+          flex: 1 1 100%;
+          margin-top: 8px;
+        }
+      }
+
+      /* Additional mobile tweaks to ensure comment dropdown text isn't cut off on very small screens */
+      @media (max-width: 480px) {
+        .comment-textarea {
+          /* Reset line height and allow the element to grow as needed */
+          line-height: normal;
+          height: auto;
+        }
+      }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -3401,16 +3435,17 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             }
 
             // Room recognition rule:
-            // - A room line is ONLY a token that ends with "ZL-" (e.g., 1HLF1026ZL-)
+            // - A room line starts with a token ending in one of: ZL-, ZLE, ZA-, or ZG-
+            //   (e.g., 1HLF1026ZL-)
             // - Codes may contain hyphens (e.g., 1DVL5309-05-176) and must NOT be treated as rooms
-            // - Supports tab-separated input where the first column is the room (or blank to repeat the previous room)
+            // - Lines may be separated by tabs or spaces; spacing between the room token and codes is flexible
             const roomCodes = {};
-            const roomPattern = /^-?[A-Z0-9-]+Z(?:L-|LE|A-|G-)$/i;
             const lines = codeText.split('\n');
             let currentRoom = null;
 
             function addCodesToRoom(room, codesText) {
                 if (!codesText) return;
+                // Split codes on any whitespace (spaces, tabs, newlines)
                 const codes = codesText.split(/\s+/).map(s => s.trim()).filter(Boolean);
                 if (codes.length === 0) return;
                 if (!roomCodes[room]) roomCodes[room] = [];
@@ -3420,40 +3455,24 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             lines.forEach(rawLine => {
                 if (!rawLine) return;
 
-                // Keep tabs for 2-column data
-                const cols = rawLine.split('\t');
-                const col1 = (cols[0] ?? '').trim();
-                const col2 = cols.length > 1 ? cols.slice(1).join('\t').trim() : '';
-
-                // Case 1: first column is a room (ends with ZL-)
-                if (col1 && roomPattern.test(col1)) {
-                    currentRoom = col1;
+                // Attempt to match a room token at the start of the line. This allows for variable
+                // spacing (spaces or tabs) between the room and its codes.
+                // Example matches: "1HLA1428ZL-    1HLA14SE2014", "1HLA1432ZL-              1HLA14SE2018"
+                const match = rawLine.match(/^\s*([A-Z0-9-]+Z(?:L-|LE|A-|G-))\s*(.*)$/i);
+                if (match) {
+                    const room = match[1].trim();
+                    const codesPart = match[2] || '';
+                    currentRoom = room;
                     if (!roomCodes[currentRoom]) roomCodes[currentRoom] = [];
-                    addCodesToRoom(currentRoom, col2);
+                    addCodesToRoom(currentRoom, codesPart);
                     return;
                 }
 
-                // Case 2: blank first column but codes exist in second column -> same room as previous
-                if (!col1 && col2) {
-                    const room = currentRoom || 'Unassigned';
-                    addCodesToRoom(room, col2);
-                    return;
-                }
-
-                // Case 3: single-column lines (or first col used as the token)
-                const token = col1 || col2 || '';
-                if (!token) return;
-
-                // If the token itself is a room header, switch current room
-                if (roomPattern.test(token)) {
-                    currentRoom = token;
-                    if (!roomCodes[currentRoom]) roomCodes[currentRoom] = [];
-                    return;
-                }
-
-                // Otherwise treat as code(s) for current room / unassigned
+                // If no room token match, treat the line as codes for the current room (or Unassigned)
+                const trimmed = rawLine.trim();
+                if (!trimmed) return;
                 const room = currentRoom || 'Unassigned';
-                addCodesToRoom(room, token);
+                addCodesToRoom(room, trimmed);
             });
 
             // Barcode preset list (for dropdown type-ahead)
