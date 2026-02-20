@@ -3367,65 +3367,76 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 showMessageModal('Input Required', 'Please enter room codes.');
                 return;
             }
-
-            // Parse room codes with improved logic
+        
             appState.roomCodes = {};
-            const lines = codeText.split('\n').map(line => line.trim()).filter(line => line);
+            const lines = codeText.split('\n');
             let currentRoom = null;
-            
-            lines.forEach(line => {
-                if (line.includes('-')) {
-                    // Line contains a room and codes
-                    const parts = line.split('-');
-                    if (parts.length >= 2) {
-                        const room = parts[0].trim();
-                        const codes = parts.slice(1).join('-').trim().split(/\s+/).filter(code => code);
-                        if (!appState.roomCodes[room]) {
-                            appState.roomCodes[room] = [];
-                        }
-                        appState.roomCodes[room] = appState.roomCodes[room].concat(codes);
-                        currentRoom = room; // Set this as the current room for subsequent codes
-                    }
-                } else {
-                    // Individual code without room association - assign to current room or unassigned
-                    if (currentRoom) {
-                        // Assign to the current room (the room above)
-                        if (!appState.roomCodes[currentRoom]) {
-                            appState.roomCodes[currentRoom] = [];
-                        }
-                        appState.roomCodes[currentRoom].push(line);
-                    } else {
-                        // No current room, assign to unassigned
-                        const room = 'Unassigned';
-                        if (!appState.roomCodes[room]) {
-                            appState.roomCodes[room] = [];
-                        }
-                        appState.roomCodes[room].push(line);
-                    }
+        
+            function addCodesToRoom(room, codesText) {
+                if (!codesText) return;
+        
+                const codes = codesText
+                    .split(/\s+/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
+        
+                if (codes.length === 0) return;
+        
+                if (!appState.roomCodes[room]) {
+                    appState.roomCodes[room] = [];
                 }
+        
+                appState.roomCodes[room] =
+                    appState.roomCodes[room].concat(codes);
+            }
+        
+            lines.forEach(rawLine => {
+                if (!rawLine) return;
+        
+                // SAME ROOM REGEX AS UPLOADED FILE
+                const match = rawLine.match(/^\s*([A-Z0-9-]+Z(?:L-|LE|A-|G-))\s*(.*)$/i);
+        
+                if (match) {
+                    const room = match[1].trim();
+                    const codesPart = match[2] || '';
+        
+                    currentRoom = room;
+        
+                    if (!appState.roomCodes[currentRoom]) {
+                        appState.roomCodes[currentRoom] = [];
+                    }
+        
+                    addCodesToRoom(currentRoom, codesPart);
+                    return;
+                }
+        
+                // Not a room → treat as codes
+                const trimmed = rawLine.trim();
+                if (!trimmed) return;
+        
+                const room = currentRoom || 'Unassigned';
+                addCodesToRoom(room, trimmed);
             });
-
+        
             appState.currentCodeRoomIndex = 0;
             appState.checkData = {};
             appState.codeSpecificComments = {};
             appState.isInspectionMode = true;
-
-            // Initialize check data for each code
+        
+            // Initialize check data
             for (const room in appState.roomCodes) {
                 appState.roomCodes[room].forEach(code => {
                     const uniqueCodeId = `${room}-${code}`;
-                    appState.checkData[uniqueCodeId] = null; // Store index of selected status
+                    appState.checkData[uniqueCodeId] = null;
                     appState.codeSpecificComments[uniqueCodeId] = '';
                 });
             }
-
+        
             saveDataToStorage();
             generateCodeCheckItems();
             showCodeCheckPage();
             updateCodeCheckPage();
         }
-
-
         
         function startAssetTagz2Inspection() {
             const codeText = (assetTagz2CodeListTextarea ? assetTagz2CodeListTextarea.value : '').trim();
