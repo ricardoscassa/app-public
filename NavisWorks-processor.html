@@ -244,7 +244,7 @@
     <div class="header">
         <div class="container">
             <h1>Navisworks Code Processor</h1>
-            <p class="subtitle">Filter and process codes for Navisworks export</p>
+            <p class="subtitle">Filter and process codes for Navisworks</p>
         </div>
     </div>
 
@@ -256,7 +256,7 @@
                 <div class="checkbox-group">
                     <input type="checkbox" id="process-leading-check">
                     <label for="process-leading-check">
-                        1) Remove first char IF code starts with "1" AND contains SE/ST/SV + 4 digits anywhere.
+                        1) Remove first char IF code starts with "1" AND contains SE/ST/SV.
                     </label>
                 </div>
 
@@ -277,7 +277,7 @@
                 <div class="checkbox-group">
                     <input type="checkbox" id="process-asite-check">
                     <label for="process-asite-check">
-                        4) Asite model: remove first char and cut from "SPL" onwards (drop SPL and "/").
+                        4) Asite model pipe: remove first char and cut from "SPL" onwards (drop SPL and "/").
                     </label>
                 </div>
 
@@ -337,148 +337,181 @@
     <div class="copy-feedback" id="copy-feedback">Copied to clipboard!</div>
 
     <script>
-        let processedData = [];
+    let processedData = [];
 
-function applyLeadingRule(code) {
-    const startsWithDigit = /^\d/.test(code);         // checks if first character is a number
-    const hasPattern = /(SE|ST|SV)\d{4}/.test(code);  // same pattern as before
-
-    return (startsWithDigit && hasPattern)
-        ? code.substring(1)
-        : code;
-}
-
-        function applySuffixRule(code) {
-            const suffixRegex = /(SE|ST|SV)\d{4}([.-]\d+)$/;
-            const match = code.match(suffixRegex);
-            if (match) {
-                const cutPos = match.index + match[1].length + 4;
-                return code.substring(0, cutPos);
-            }
-            return code;
-        }
-
-        function applyBilfingerRule(code) {
-            const re = /^(\d)([A-Z]{3}\d{4})(TYB|ISO)(\d{4})(\/)?SPL(\d{1,2})$/;
-            const m = code.match(re);
-            if (!m) return code;
-
-            const prefix = m[2];
-            let type = m[3];
-            const mid = m[4];
-            let spl = m[6];
-
-            if (type === "TYB") type = "ISO";
-            if (spl.length === 1) spl = "0" + spl;
-
-            return `${prefix}${type}${mid}SPL${spl}`;
-        }
-
-function applyAsiteRule(code) {
-    if (!code) return code;
-
-    // Only apply rule if "SPL" exists in the code
-    if (code.includes("SPL")) {
-        let out = code.substring(1); // remove first char
-        const idx = out.indexOf("SPL");
-        if (idx !== -1) out = out.substring(0, idx);
-        return out.replace(/\/$/, ""); // remove trailing slash if left
+    // 1) Remove first char IF code starts with digit AND contains SE/ST/SV####.
+    function applyLeadingRule(code) {
+        const startsWithDigit = /^\d/.test(code);
+        const hasPattern = /(SE|ST|SV)\d{4}/.test(code);
+        return (startsWithDigit && hasPattern)
+            ? code.substring(1)
+            : code;
     }
 
-    // If "SPL" not found, return original code unchanged
-    return code;
-}
+    // 2) Trim only ending ".#" or "-#" after SE/ST/SV####.
+    function applySuffixRule(code) {
+        const suffixRegex = /(SE|ST|SV)\d{4}([.-]\d+)$/;
+        const match = code.match(suffixRegex);
+        if (match) {
+            const cutPos = match.index + match[1].length + 4;
+            return code.substring(0, cutPos);
+        }
+        return code;
+    }
 
+    // 3) Bilfinger pipes rule
+    function applyBilfingerRule(code) {
+        const re = /^(\d)([A-Z]{3}\d{4})(TYB|ISO)(\d{4})(\/)?SPL(\d{1,2})$/;
+        const m = code.match(re);
+        if (!m) return code;
 
-        function processCodes() {
-            const input = document.getElementById('input-codes').value;
-            const doLeading = document.getElementById('process-leading-check').checked;
-            const doSuffix = document.getElementById('process-suffix-check').checked;
-            const doBilfinger = document.getElementById('process-bilfinger-check').checked;
-            const doAsite = document.getElementById('process-asite-check').checked;
+        const prefix = m[2];
+        let type = m[3];
+        const mid = m[4];
+        let spl = m[6];
 
-            const lines = input.split('\n').filter(l => l.trim());
-            processedData = [];
-            let processedCount = 0;
+        if (type === "TYB") type = "ISO";
+        if (spl.length === 1) spl = "0" + spl;
 
-            lines.forEach(line => {
-                const original = line.trim();
-                let current = original;
-                let changed = false;
+        return `${prefix}${type}${mid}SPL${spl}`;
+    }
 
-                if (doLeading) { const v = applyLeadingRule(current); if (v !== current) { current = v; changed = true; } }
-                if (doSuffix) { const v = applySuffixRule(current); if (v !== current) { current = v; changed = true; } }
-                if (doBilfinger) { const v = applyBilfingerRule(current); if (v !== current) { current = v; changed = true; } }
-                if (doAsite) { const v = applyAsiteRule(current); if (v !== current) { current = v; changed = true; } }
+    // 4) Asite model pipe rule
+    function applyAsiteRule(code) {
+        if (!code) return code;
 
-                processedData.push({ original, processed: current, matched: changed });
-                if (changed) processedCount++;
-            });
-
-            const output = processedData.map(i => i.processed).join('\n');
-            document.getElementById('output-codes').value = output;
-
-            if (processedData.length > 0) {
-                document.getElementById('summary-card').style.display = 'block';
-                document.getElementById('total-count').textContent = processedData.length;
-                document.getElementById('processed-count').textContent = processedCount;
-                document.getElementById('unchanged-count').textContent = processedData.length - processedCount;
-                document.getElementById('export-btn').disabled = false;
-            } else {
-                document.getElementById('summary-card').style.display = 'none';
-                document.getElementById('export-btn').disabled = true;
-            }
+        if (code.includes("SPL")) {
+            let out = code.substring(1);
+            const idx = out.indexOf("SPL");
+            if (idx !== -1) out = out.substring(0, idx);
+            return out.replace(/\/$/, "");
         }
 
-        function clearInput() {
-            document.getElementById('input-codes').value = '';
-            document.getElementById('output-codes').value = '';
+        return code;
+    }
+
+    // 5) ECS detection (used during export)
+    function isEcsCode(code) {
+        if (!code) return false;
+        const c = code.trim();
+        return /^\d[A-Z]{3}\d{4}-\d{1,2}-\d{1,3}$/.test(c);
+    }
+
+
+    /* ============================================================
+       MAIN PROCESSING PIPELINE
+       ============================================================ */
+
+    function processCodes() {
+        const input = document.getElementById('input-codes').value;
+
+        const doLeading = document.getElementById('process-leading-check').checked;
+        const doSuffix = document.getElementById('process-suffix-check').checked;
+        const doBilfinger = document.getElementById('process-bilfinger-check').checked;
+        const doAsite = document.getElementById('process-asite-check').checked;
+
+        const lines = input.split('\n').filter(l => l.trim());
+        processedData = [];
+        let processedCount = 0;
+
+        lines.forEach(line => {
+            const original = line.trim();
+            let current = original;
+            let changed = false;
+
+            if (doLeading) {
+                const v = applyLeadingRule(current);
+                if (v !== current) { current = v; changed = true; }
+            }
+
+            if (doSuffix) {
+                const v = applySuffixRule(current);
+                if (v !== current) { current = v; changed = true; }
+            }
+
+            if (doBilfinger) {
+                const v = applyBilfingerRule(current);
+                if (v !== current) { current = v; changed = true; }
+            }
+
+            if (doAsite) {
+                const v = applyAsiteRule(current);
+                if (v !== current) { current = v; changed = true; }
+            }
+
+            processedData.push({ original, processed: current, matched: changed });
+            if (changed) processedCount++;
+        });
+
+        updateUI(processedCount);
+    }
+
+
+    /* ============================================================
+       UI + EXPORT HELPERS
+       ============================================================ */
+
+    function updateUI(processedCount) {
+        const output = processedData.map(i => i.processed).join('\n');
+        document.getElementById('output-codes').value = output;
+
+        if (processedData.length > 0) {
+            document.getElementById('summary-card').style.display = 'block';
+            document.getElementById('total-count').textContent = processedData.length;
+            document.getElementById('processed-count').textContent = processedCount;
+            document.getElementById('unchanged-count').textContent =
+                processedData.length - processedCount;
+            document.getElementById('export-btn').disabled = false;
+        } else {
             document.getElementById('summary-card').style.display = 'none';
             document.getElementById('export-btn').disabled = true;
-            processedData = [];
         }
+    }
 
-        function copyToClipboard() {
-            const output = document.getElementById('output-codes').value;
-            navigator.clipboard.writeText(output).then(() => {
-                const feedback = document.getElementById('copy-feedback');
-                feedback.classList.add('show');
-                setTimeout(() => feedback.classList.remove('show'), 2000);
-            });
-        }
+    function clearInput() {
+        document.getElementById('input-codes').value = '';
+        document.getElementById('output-codes').value = '';
+        document.getElementById('summary-card').style.display = 'none';
+        document.getElementById('export-btn').disabled = true;
+        processedData = [];
+    }
 
-        function escapeXml(str) {
-            return str.replace(/&/g, '&amp;')
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;')
-                      .replace(/"/g, '&quot;')
-                      .replace(/'/g, '&apos;');
-        }
+    function copyToClipboard() {
+        const output = document.getElementById('output-codes').value;
+        navigator.clipboard.writeText(output).then(() => {
+            const feedback = document.getElementById('copy-feedback');
+            feedback.classList.add('show');
+            setTimeout(() => feedback.classList.remove('show'), 2000);
+        });
+    }
 
-        // ECS codes (e.g. 1DVL5103-04-61) – pattern:
-        //   N + DDD + NNNN + -{N|NN} + -{N|NN}
-        // Examples supported at the end: N-N, N-NN, NN-N, NN-NN
-        function isEcsCode(code) {
-            if (!code) return false;
-            const c = code.trim();
-            return /^\d[A-Z]{3}\d{4}-\d{1,2}-\d{1,3}$/.test(c);
-        }
+    function escapeXml(str) {
+        return str.replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/'/g, '&apos;');
+    }
 
-        function generateNavisworksXML() {
-            const now = new Date();
-            const pad = (n) => n.toString().padStart(2, '0');
-            const filename = `Output_${pad(now.getDate())}${pad(now.getMonth()+1)}_${pad(now.getHours())}${pad(now.getMinutes())}.xml`;
+    function generateNavisworksXML() {
+        const now = new Date();
+        const pad = n => n.toString().padStart(2, '0');
+        const filename = `Output_${pad(now.getDate())}${pad(now.getMonth()+1)}_${pad(now.getHours())}${pad(now.getMinutes())}.xml`;
 
-            const exportEcsAsL4spe = document.getElementById('process-ecs-l4spe-check')?.checked;
+        const exportEcsAsL4spe =
+            document.getElementById('process-ecs-l4spe-check')?.checked;
 
-            const unique = [...new Set(processedData.map(i => i.processed.trim()).filter(Boolean))];
-            let conditions = '';
-            unique.forEach((c, i) => {
-                const flags = i === 0 ? '10' : '74';
+        const unique = [...new Set(
+            processedData.map(i => i.processed.trim()).filter(Boolean)
+        )];
 
-                // If flagged, export ECS codes using the same L4SPE/ECS Code structure you showed in the XML.
-                if (exportEcsAsL4spe && isEcsCode(c)) {
-                    conditions +=
+        let conditions = '';
+
+        unique.forEach((c, i) => {
+            const flags = i === 0 ? '10' : '74';
+
+            if (exportEcsAsL4spe && isEcsCode(c)) {
+                conditions +=
 `      <condition test="contains" flags="${flags}">
         <category>
           <name internal="LcOaPropOverrideCat">L4SPE</name>
@@ -491,17 +524,17 @@ function applyAsiteRule(code) {
         </value>
       </condition>
 `;
-                } else {
-                    conditions +=
+            } else {
+                conditions +=
 `      <condition test="contains" flags="${flags}">
         <property><name internal="LcOaSceneBaseUserName">Name</name></property>
         <value><data type="wstring">${escapeXml(c)}</data></value>
       </condition>
 `;
-                }
-            });
+            }
+        });
 
-            const xml =
+        const xml =
 `<?xml version="1.0" encoding="UTF-8"?>
 <exchange xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="http://download.autodesk.com/us/navisworks/schemas/nw-exchange-12.0.xsd"
@@ -512,26 +545,41 @@ ${conditions}    </conditions>
     <locator>/</locator>
   </findspec>
 </exchange>`;
-            return { xml, filename };
-        }
 
-        function exportXML() {
-            const { xml, filename } = generateNavisworksXML();
-            const link = document.createElement('a');
-            link.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(xml));
-            link.setAttribute('download', filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+        return { xml, filename };
+    }
 
-        document.getElementById('input-codes').addEventListener('input', processCodes);
-        document.getElementById('process-leading-check').addEventListener('change', processCodes);
-        document.getElementById('process-suffix-check').addEventListener('change', processCodes);
-        document.getElementById('process-bilfinger-check').addEventListener('change', processCodes);
-        document.getElementById('process-asite-check').addEventListener('change', processCodes);
-        const ecsCb = document.getElementById('process-ecs-l4spe-check');
-        if (ecsCb) ecsCb.addEventListener('change', processCodes);
+    function exportXML() {
+        const { xml, filename } = generateNavisworksXML();
+        const link = document.createElement('a');
+        link.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(xml));
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+
+    /* ============================================================
+       EVENT LISTENERS
+       ============================================================ */
+
+    document.getElementById('input-codes')
+        .addEventListener('input', processCodes);
+
+    document.getElementById('process-leading-check')
+        .addEventListener('change', processCodes);
+
+    document.getElementById('process-suffix-check')
+        .addEventListener('change', processCodes);
+
+    document.getElementById('process-bilfinger-check')
+        .addEventListener('change', processCodes);
+
+    document.getElementById('process-asite-check')
+        .addEventListener('change', processCodes);
+
+    const ecsCb = document.getElementById('process-ecs-l4spe-check');
+    if (ecsCb) ecsCb.addEventListener('change', processCodes);
+
 </script>
-</body>
-</html>
