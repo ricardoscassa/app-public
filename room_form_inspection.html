@@ -3393,7 +3393,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             lines.forEach(rawLine => {
                 if (!rawLine) return;
         
-                // SAME ROOM REGEX AS UPLOADED FILE
+                // * Regex to match room patern * //
                 const match = rawLine.match(/^\s*([A-Z0-9-]+Z(?:L-|LE|A-|G-))\s*(.*)$/i);
         
                 if (match) {
@@ -3445,11 +3445,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
                 return;
             }
 
-            // Room recognition rule:
-            // - A room line starts with a token ending in one of: ZL-, ZLE, ZA-, or ZG-
-            //   (e.g., 1HLF1026ZL-)
-            // - Codes may contain hyphens (e.g., 1DVL5309-05-176) and must NOT be treated as rooms
-            // - Lines may be separated by tabs or spaces; spacing between the room token and codes is flexible
+            // * Room recognition rules *//
             const roomCodes = {};
             const lines = codeText.split('\n');
             let currentRoom = null;
@@ -3466,9 +3462,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             lines.forEach(rawLine => {
                 if (!rawLine) return;
 
-                // Attempt to match a room token at the start of the line. This allows for variable
-                // spacing (spaces or tabs) between the room and its codes.
-                // Example matches: "1HLA1428ZL-    1HLA14SE2014", "1HLA1432ZL-              1HLA14SE2018"
+                // * Recognize room patern * //
                 const match = rawLine.match(/^\s*([A-Z0-9-]+Z(?:L-|LE|A-|G-))\s*(.*)$/i);
                 if (match) {
                     const room = match[1].trim();
