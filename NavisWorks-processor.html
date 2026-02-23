@@ -397,6 +397,13 @@
         return /^\d[A-Z]{3}\d{4}-\d{1,2}-\d{1,3}$/.test(c);
     }
 
+    // 5.1) Remove first digit from ECS codes
+    function applyEcsRule(code) {
+    if (!isEcsCode(code))
+        return code;
+    return code.trim().slice(1);
+    }
+
 
     /* ============================================================
        MAIN PROCESSING PIPELINE
@@ -409,7 +416,8 @@
         const doSuffix = document.getElementById('process-suffix-check').checked;
         const doBilfinger = document.getElementById('process-bilfinger-check').checked;
         const doAsite = document.getElementById('process-asite-check').checked;
-
+        const doEcs = document.getElementById('process-ecs-l4spe-check').checked;
+        
         const lines = input.split('\n').filter(l => l.trim());
         processedData = [];
         let processedCount = 0;
@@ -436,6 +444,11 @@
 
             if (doAsite) {
                 const v = applyAsiteRule(current);
+                if (v !== current) { current = v; changed = true; }
+            }
+
+            if (doEcs) {
+                const v = applyEcsRule(current);
                 if (v !== current) { current = v; changed = true; }
             }
 
