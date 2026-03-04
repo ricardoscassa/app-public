@@ -527,9 +527,11 @@
         let conditions = '';
 
         unique.forEach((c, i) => {
+            const originalItem = processedData.find(p => p.processed.trim() === c);
+            const originalCode = originalItem ? originalItem.original : c;
             const flags = i === 0 ? '10' : '74';
 
-            if (exportEcsAsL4spe && isEcsCode(c)) {
+            if (exportEcsAsL4spe && isEcsCode(originalCode)) {
                 conditions +=
 `      <condition test="contains" flags="${flags}">
         <category>
