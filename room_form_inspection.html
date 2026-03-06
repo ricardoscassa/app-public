@@ -2331,22 +2331,12 @@ rooms: [],
         // Default status options for code inspection
         const defaultCodeStatusOptions = [
             'Available',
-            'CBS Installation',
             'Clamps Not welded',
-            'Embedment Plate not surveyed',
-            'Embedment Plate PIA Required',
             'Equipment/Material Blocking Work Access',
             'No Access - Unable To Verify',
-            'Previously Installed',
             'Protection Covering Embedment Plate',
-            'Room Not Available',
-            'Possible Scaffold Amendment Required',
-            'Supports Not installed Pipe/Tray/Duct',
             'TCO (Temporary Construction Opening)',
             'Embedment Plate Labelled Wrong',
-            'Embedment plate Not available',
-            'Non-Conforming Product TAG on support',
-            'NDT Required On Supports'
         ];
 
         // Get current status options (custom or default)
@@ -4596,7 +4586,7 @@ barcodeWrapper.appendChild(barcodeInput);
         function exportCodeToCsv() {
             try {
                 const codeStatusOptions = getCodeStatusOptions();
-                let csvContent = 'Room,Code,Status,Comment\n';
+                let csvContent = 'Room,Code,Status,Comment,Room_Status\n';
                 
                 for (const room in appState.roomCodes) {
                     appState.roomCodes[room].forEach(code => {
@@ -4604,8 +4594,9 @@ barcodeWrapper.appendChild(barcodeInput);
                         const statusIndex = appState.checkData[uniqueCodeId];
                         const status = (statusIndex !== null && statusIndex !== undefined) ? codeStatusOptions[statusIndex] : '';
                         const comment = appState.codeSpecificComments[uniqueCodeId] || '';
-                        
-                        csvContent += `"${room}","${code}","${status}","${comment.replace(/"/g, '""')}"\n`;
+                        const room_status = appState.roomStatus[room] || '';
+        
+                        csvContent += `"${room}","${code}","${status}","${comment.replace(/"/g, '""')}","${room_status}"\n`;
                     });
                 }
                 
