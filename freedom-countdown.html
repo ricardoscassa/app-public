@@ -4,222 +4,440 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Freedom Countdown</title>
-
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-    --bg: #0f172a;
-    --card: rgba(255,255,255,0.05);
-    --text: #e2e8f0;
-    --accent: #38bdf8;
-}
+  *{box-sizing:border-box;margin:0;padding:0}
 
-/* THEMES */
-body.creepy {
-    --bg: #020617;
-    --accent: #ef4444;
-}
+  :root{
+    --bg1:#080c14;
+    --bg2:#0e1420;
+    --accent:#ef4444;
+    --accent2:#f97316;
+    --glow:rgba(239,68,68,0.15);
+    --glow2:rgba(249,115,22,0.08);
+    --text:#f1f5f9;
+    --muted:#64748b;
+    --muted2:#94a3b8;
+    --card:rgba(255,255,255,0.035);
+    --border:rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.12);
+    --unit-bg:rgba(0,0,0,0.25);
+  }
 
-body.funny {
-    --bg: linear-gradient(135deg, #6366f1, #22c55e);
-    --accent: #facc15;
-}
+  body.funny{
+    --accent:#a855f7;
+    --accent2:#ec4899;
+    --glow:rgba(168,85,247,0.15);
+    --glow2:rgba(236,72,153,0.08);
+    --bg1:#09060f;
+    --bg2:#110d1c;
+  }
 
-/* BASE */
-body {
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui;
-    transition: all 0.5s ease;
-}
+  body{
+    min-height:100vh;
+    background:var(--bg1);
+    font-family:'DM Mono', monospace;
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    position:relative;
+  }
 
-/* CARD */
-.card {
-    text-align: center;
-    padding: 40px;
-    border-radius: 20px;
-    background: var(--card);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    z-index: 2;
-    max-width: 500px;
-    width: 90%;
-}
+  /* ── CANVAS STARS ── */
+  #stars{position:fixed;inset:0;pointer-events:none;z-index:0}
 
-/* TITLE */
-h1 {
-    margin-bottom: 10px;
-}
+  /* ── GLOW ORBS ── */
+  .orb{
+    position:fixed;border-radius:50%;
+    filter:blur(90px);pointer-events:none;z-index:0;
+    transition:background 1.2s ease;
+  }
+  #orb1{width:600px;height:600px;top:-200px;left:50%;transform:translateX(-50%);background:var(--glow)}
+  #orb2{width:300px;height:300px;bottom:-100px;right:-80px;background:var(--glow2)}
 
-.subtitle {
-    opacity: 0.7;
-    margin-bottom: 20px;
-}
+  /* ── SCANLINE TEXTURE ── */
+  .scanlines{
+    position:fixed;inset:0;pointer-events:none;z-index:1;
+    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  }
 
-/* COUNTDOWN */
-.countdown {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-}
+  /* ── CARD ── */
+  .card{
+    position:relative;z-index:2;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:44px 52px 40px;
+    max-width:540px;width:92%;
+    text-align:center;
+    backdrop-filter:blur(32px);
+    box-shadow:
+      0 0 0 1px var(--border),
+      0 40px 80px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+  }
 
-.time {
-    flex: 1;
-}
+  /* ── HEADER ── */
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 14px;border-radius:99px;
+    border:1px solid var(--border2);
+    font-size:11px;color:var(--muted2);
+    letter-spacing:.1em;text-transform:uppercase;
+    margin-bottom:22px;font-family:'DM Mono',monospace;
+  }
+  .badge-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 6px var(--accent);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
 
-.num {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--accent);
-}
+  h1{
+    font-family:'DM Serif Display',serif;
+    font-size:2.4rem;font-weight:400;
+    letter-spacing:-.02em;margin-bottom:6px;
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    transition:all .5s ease;
+  }
+  .subtitle{
+    font-size:12px;color:var(--muted);
+    letter-spacing:.08em;text-transform:uppercase;
+    margin-bottom:36px;font-family:'DM Mono',monospace;
+    transition:all .4s ease;
+  }
 
-/* BUTTON */
-.toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 10px;
-    cursor: pointer;
-    background: rgba(255,255,255,0.1);
-    color: white;
-}
+  /* ── ARC ── */
+  .arc-wrap{position:relative;width:168px;height:168px;margin:0 auto 32px}
+  svg.arc{width:100%;height:100%;transform:rotate(-90deg)}
+  .arc-track{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:5}
+  .arc-fill{
+    fill:none;stroke-width:5;stroke-linecap:round;
+    stroke:url(#ag);
+    stroke-dasharray:490;stroke-dashoffset:490;
+    transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);
+  }
+  .arc-center{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+  }
+  .arc-pct{
+    font-size:30px;font-weight:500;line-height:1;
+    font-family:'DM Mono',monospace;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .arc-sub{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.1em;text-transform:uppercase}
 
-/* BARS */
-.bars {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: space-around;
-    pointer-events: none;
-}
+  /* ── COUNTDOWN UNITS ── */
+  .countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px}
+  .unit{
+    background:var(--unit-bg);
+    border:1px solid var(--border);
+    border-radius:16px;padding:18px 6px 14px;
+    position:relative;overflow:hidden;
+    transition:border-color .3s;
+  }
+  .unit::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);
+  }
+  .num{
+    font-size:2.4rem;font-weight:500;line-height:1;
+    font-family:'DM Mono',monospace;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(160deg,#fff 40%,var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    display:block;
+  }
+  .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:8px;display:block}
 
-.bar {
-    width: 6px;
-    height: 100%;
-    background: #888;
-    transition: transform 0.5s ease;
-}
+  /* ── PROGRESS BAR ── */
+  .prog-section{margin-bottom:26px}
+  .prog-labels{
+    display:flex;justify-content:space-between;
+    font-size:10px;color:var(--muted);
+    letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;
+  }
+  .prog-track{
+    background:rgba(255,255,255,0.05);border-radius:99px;height:3px;overflow:hidden;
+    position:relative;
+  }
+  .prog-bar{
+    height:3px;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:width .8s cubic-bezier(.4,0,.2,1);
+    position:relative;
+  }
+  .prog-bar::after{
+    content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent2);
+    box-shadow:0 0 8px var(--accent2);
+  }
+  .prog-days{
+    text-align:center;font-size:11px;color:var(--muted);
+    margin-top:8px;font-family:'DM Mono',monospace;
+  }
 
-/* MESSAGE */
-.message {
-    margin-top: 20px;
-    font-style: italic;
-    opacity: 0.8;
-}
+  /* ── MESSAGE ── */
+  .message{
+    min-height:20px;font-size:12px;color:var(--muted);
+    font-style:italic;letter-spacing:.04em;
+    transition:opacity .4s ease;
+  }
 
-/* Creepy animation */
-body.creepy .card {
-    animation: flicker 3s infinite;
-}
+  /* ── TOGGLE ── */
+  .toggle-row{
+    display:flex;justify-content:center;gap:8px;
+    margin-top:28px;padding-top:24px;
+    border-top:1px solid var(--border);
+  }
+  .mode-btn{
+    padding:9px 20px;border-radius:99px;
+    border:1px solid var(--border2);
+    background:transparent;
+    color:var(--muted2);font-size:12px;
+    cursor:pointer;letter-spacing:.05em;
+    font-family:'DM Mono',monospace;
+    transition:all .25s ease;
+  }
+  .mode-btn.active{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;border-color:transparent;
+    box-shadow:0 0 20px var(--glow);
+  }
+  .mode-btn:hover:not(.active){
+    background:rgba(255,255,255,0.06);
+    color:var(--text);
+  }
 
-@keyframes flicker {
-    0%,100% {opacity:1;}
-    50% {opacity:0.85;}
-}
+  /* ── CREEPY FLICKER ── */
+  @keyframes flicker{0%,100%{opacity:1}48%{opacity:1}50%{opacity:.88}52%{opacity:1}90%{opacity:1}92%{opacity:.92}94%{opacity:1}}
+  body.creepy .card{animation:flicker 7s ease-in-out infinite}
+
+  /* ── ENTRY ANIMATION ── */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .card{animation:fadeUp .8s cubic-bezier(.2,0,.2,1) both}
 </style>
 </head>
-
 <body class="creepy">
 
-<button class="toggle" id="toggleBtn">😈 Creepy</button>
+<canvas id="stars"></canvas>
+<div class="orb" id="orb1"></div>
+<div class="orb" id="orb2"></div>
+<div class="scanlines"></div>
 
 <div class="card">
-    <h1 id="title">⛓️ Countdown</h1>
-    <p class="subtitle" id="subtitle">They said I’d be out soon...</p>
+  <div class="badge"><span class="badge-dot"></span><span id="badge-text">Day 0 of confinement</span></div>
 
-    <div class="countdown">
-        <div class="time"><div id="d" class="num">0</div>Days</div>
-        <div class="time"><div id="h" class="num">0</div>Hours</div>
-        <div class="time"><div id="m" class="num">0</div>Minutes</div>
-        <div class="time"><div id="s" class="num">0</div>Seconds</div>
+  <h1 id="title">Freedom Countdown</h1>
+  <p class="subtitle" id="subtitle">They said I'd be out soon…</p>
+
+  <!-- Arc progress -->
+  <div class="arc-wrap">
+    <svg class="arc" viewBox="0 0 168 168">
+      <defs>
+        <linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="var(--accent)"/>
+          <stop offset="100%" stop-color="var(--accent2)"/>
+        </linearGradient>
+      </defs>
+      <circle class="arc-track" cx="84" cy="84" r="78"/>
+      <circle class="arc-fill" id="arcFill" cx="84" cy="84" r="78"/>
+    </svg>
+    <div class="arc-center">
+      <div class="arc-pct" id="arcPct">0%</div>
+      <div class="arc-sub">served</div>
     </div>
+  </div>
 
-    <div class="message" id="msg"></div>
+  <!-- Countdown -->
+  <div class="countdown">
+    <div class="unit"><span class="num" id="d">000</span><span class="lbl">Days</span></div>
+    <div class="unit"><span class="num" id="h">00</span><span class="lbl">Hours</span></div>
+    <div class="unit"><span class="num" id="m">00</span><span class="lbl">Mins</span></div>
+    <div class="unit"><span class="num" id="s">00</span><span class="lbl">Secs</span></div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="prog-section">
+    <div class="prog-labels">
+      <span>14 Jul 2025</span>
+      <span>14 Jan 2027</span>
+    </div>
+    <div class="prog-track">
+      <div class="prog-bar" id="progBar" style="width:0%"></div>
+    </div>
+    <div class="prog-days" id="progDays">— days elapsed of 549</div>
+  </div>
+
+  <div class="message" id="msg">Counting every second…</div>
+
+  <div class="toggle-row">
+    <button class="mode-btn active" id="btnCreepy" onclick="setMode('creepy')">No hope...</button>
+    <button class="mode-btn" id="btnFunny" onclick="setMode('funny')">Maybe...</button>
+  </div>
 </div>
 
-<div class="bars" id="bars"></div>
-
 <script>
-// CREATE BARS
-const barsContainer = document.getElementById("bars");
-for(let i=0;i<10;i++){
-    const b=document.createElement("div");
-    b.className="bar";
-    barsContainer.appendChild(b);
-}
+  // ── DATES ──
+  const START = new Date("2025-07-14T00:00:00").getTime();
+  const END   = new Date("2027-01-14T00:00:00").getTime();
+  const TOTAL = END - START; // 18 months in ms
+  const CIRC  = 2 * Math.PI * 78; // ~490
 
-const end = new Date("2027-01-18").getTime();
-const start = Date.now();
+  // ── MESSAGES ──
+  const creepyMsgs = [
+    "Going to HP? Good luck...",
+    "Something moved in the room?",
+    "Don't blink.",
+    "They know you're counting.",
+    "The walls remember everything.",
+    "Meeting that could've been an email. Was a meeting.",
+    "Tick. Tock. Tick. Tock.",
+    "Time here never ends....",
+    "Are you sure you're all good?",
+    "It's just a normal job they said....",
+    "Every second here feels like eternity...."
+  ];
+  const funnyMsgs = [
+    "Freedom.exe has stopped responding 😂",
+    "Have you tried bribing the calendar?",
+    "Flat circle — shaped like a prison cell.",
+    "Still waiting on that presidential pardon.",
+    "Fun fact: grass still exists out there.",
+    "Your Uber to freedom is 'arriving soon'.",
+    "You could've learned 4 languages by now.",
+    "The outside world misses you (maybe).",
+    "Sponsored by: Patience™",
+    "Day 1 of being institutionalised is the hardest… right?"
+  ];
 
-let mode = "creepy";
+  let mode = "creepy";
 
-const creepyTexts = [
-    "You hear that?",
-    "Something moved.",
-    "Don’t blink.",
-    "They know."
-];
+  function pad(n, l = 2){ return String(n).padStart(l, '0') }
 
-const funnyTexts = [
-    "Still loading freedom 😂",
-    "Patience is overrated",
-    "Have you tried snacks?",
-    "Freedom.exe not found"
-];
+  function tick(){
+    const now  = Date.now();
+    const diff = Math.max(0, END - now);
+    const elapsed = Math.max(0, now - START);
+    const pct  = Math.min(1, Math.max(0, elapsed / TOTAL));
+    const pctRounded = Math.round(pct * 1000) / 10; // 1 decimal
 
-// TOGGLE
-document.getElementById("toggleBtn").onclick = () => {
-    if(mode === "creepy"){
-        mode = "funny";
-        document.body.className = "funny";
-        toggleBtn.innerText = "😂 Funny";
-        title.innerText = "😂 Still Waiting";
-        subtitle.innerText = "This is fine.";
+    // Countdown units
+    document.getElementById('d').textContent = pad(Math.floor(diff / 86400000), 3);
+    document.getElementById('h').textContent = pad(Math.floor(diff / 3600000) % 24);
+    document.getElementById('m').textContent = pad(Math.floor(diff / 60000) % 60);
+    document.getElementById('s').textContent = pad(Math.floor(diff / 1000) % 60);
+
+    // Badge: day number in sentence
+    const dayIn = Math.floor(elapsed / 86400000);
+    document.getElementById('badge-text').textContent = `Day ${dayIn.toLocaleString()} of confinement`;
+
+    // Arc
+    document.getElementById('arcPct').textContent = pctRounded.toFixed(1) + '%';
+    document.getElementById('arcFill').style.strokeDashoffset = CIRC * (1 - pct);
+
+    // Progress bar
+    const totalDays = Math.round(TOTAL / 86400000);
+    const daysElapsed = Math.floor(elapsed / 86400000);
+    document.getElementById('progBar').style.width = (pct * 100).toFixed(2) + '%';
+    document.getElementById('progDays').textContent =
+      `${daysElapsed.toLocaleString()} days elapsed of ${totalDays.toLocaleString()}`;
+
+    // Done?
+    if(diff === 0){
+      document.querySelector('.card').innerHTML = `
+        <div style="padding:40px 0">
+          <div style="font-size:64px;margin-bottom:16px">🕊️</div>
+          <h1 style="font-family:'DM Serif Display',serif;font-size:3rem;font-weight:400;
+            background:linear-gradient(135deg,var(--accent),var(--accent2));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+            FREE
+          </h1>
+          <p style="font-size:13px;color:var(--muted);margin-top:16px;letter-spacing:.08em;text-transform:uppercase">
+            The sentence is complete
+          </p>
+        </div>`;
+    }
+  }
+
+  // ── MESSAGE ROTATION ──
+  function rotateMsg(){
+    const el = document.getElementById('msg');
+    if(!el) return;
+    el.style.opacity = 0;
+    setTimeout(() => {
+      const arr = mode === 'creepy' ? creepyMsgs : funnyMsgs;
+      el.textContent = arr[Math.floor(Math.random() * arr.length)];
+      el.style.opacity = 1;
+    }, 400);
+  }
+
+  // ── MODE TOGGLE ──
+  function setMode(m){
+    mode = m;
+    document.body.className = m;
+    document.getElementById('btnCreepy').classList.toggle('active', m === 'creepy');
+    document.getElementById('btnFunny').classList.toggle('active',  m === 'funny');
+
+    const title    = document.getElementById('title');
+    const subtitle = document.getElementById('subtitle');
+    if(m === 'creepy'){
+      title.textContent    = 'Freedom Countdown';
+      subtitle.textContent = "They said I'd be out soon…";
     } else {
-        mode = "creepy";
-        document.body.className = "creepy";
-        toggleBtn.innerText = "😈 Creepy";
-        title.innerText = "⛓️ Countdown";
-        subtitle.innerText = "They said I’d be out soon...";
+      title.textContent    = 'Still Waiting 😂';
+      subtitle.textContent = "This is fine. Everything is fine.";
     }
-};
+    rotateMsg();
+  }
 
-// UPDATE
-function update(){
-    const now = Date.now();
-    const diff = end - now;
+  // ── STAR FIELD ──
+  const canvas = document.getElementById('stars');
+  const ctx    = canvas.getContext('2d');
+  let stars    = [];
 
-    const total = end - start;
-    const progress = 1 - diff/total;
+  function resizeCanvas(){
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    stars = Array.from({ length: 140 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.2,
+      a: Math.random(),
+      speed: (Math.random() - 0.5) * 0.005
+    }));
+  }
 
-    d.innerText = Math.floor(diff/86400000);
-    h.innerText = Math.floor((diff/3600000)%24);
-    m.innerText = Math.floor((diff/60000)%60);
-    s.innerText = Math.floor((diff/1000)%60);
-
-    // TEXT
-    const texts = mode === "creepy" ? creepyTexts : funnyTexts;
-    msg.innerText = texts[Math.floor(Math.random()*texts.length)];
-
-    // BARS PROGRESSIVE OPEN
-    document.querySelectorAll(".bar").forEach((bar,i)=>{
-        const offset = (i - 5) * 20;
-        bar.style.transform = `translateX(${offset * progress}px)`;
+  function drawStars(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.a = Math.max(0.05, Math.min(1, s.a + s.speed + (Math.random() - 0.5) * 0.003));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${s.a.toFixed(3)})`;
+      ctx.fill();
     });
+    requestAnimationFrame(drawStars);
+  }
 
-    if(diff < 0){
-        document.querySelector(".card").innerHTML = "<h1>🕊️ FREE</h1>";
-    }
-}
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  drawStars();
 
-setInterval(update,1000);
+  // ── INIT ──
+  tick();
+  setInterval(tick, 1000);
+  setInterval(rotateMsg, 3800);
 </script>
-
 </body>
 </html>
