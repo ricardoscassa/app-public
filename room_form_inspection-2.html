@@ -2611,8 +2611,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('ecsQuickEntryToggle').addEventListener('click', function() {
                 appState.ecsQuickEntryMode = !appState.ecsQuickEntryMode;
                 this.classList.toggle('active', appState.ecsQuickEntryMode);
-                this.querySelector('.toggle-icon').textContent = appState.ecsQuickEntryMode ? '📋' : '🔍';
-                this.querySelector('.toggle-label').textContent = appState.ecsQuickEntryMode ? ' List Mode' : ' Quick Entry Mode';
+                this.querySelector('.toggle-label').textContent = appState.ecsQuickEntryMode ? 'Search Mode' : 'List Mode';
                 saveDataToStorage();
                 if (appState.ecsQuickEntryMode) {
                     renderEcsQuickEntryMode();
