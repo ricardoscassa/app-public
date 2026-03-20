@@ -3006,8 +3006,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             if (toggleBtn) {
                 const active = !!appState.ecsQuickEntryMode;
                 toggleBtn.classList.toggle('active', active);
-                toggleBtn.querySelector('.toggle-icon').textContent = active ? '📋' : '🔍';
-                toggleBtn.querySelector('.toggle-label').textContent = active ? ' List Mode' : ' Quick Entry Mode';
+                toggleBtn.querySelector('.toggle-label').textContent = active ? 'Search Mode' : 'List Mode';
             }
         }
 
