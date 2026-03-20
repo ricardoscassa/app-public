@@ -3,221 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Countdown Escape</title>
+<title>Freedom Countdown</title>
 
 <style>
 :root {
-    --bg: #020617;
+    --bg: #0f172a;
+    --card: rgba(255,255,255,0.05);
     --text: #e2e8f0;
     --accent: #38bdf8;
 }
 
 /* THEMES */
 body.creepy {
-    background: radial-gradient(circle, #1a0000, #000);
+    --bg: #020617;
     --accent: #ef4444;
 }
 
 body.funny {
-    background: linear-gradient(135deg, #38bdf8, #a78bfa);
-    --accent: #22c55e;
-    color: #fff;
+    --bg: linear-gradient(135deg, #6366f1, #22c55e);
+    --accent: #facc15;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: system-ui;
-}
-
+/* BASE */
 body {
+    margin: 0;
     height: 100vh;
     display: flex;
-    justify-content: center;
     align-items: center;
-    transition: all 0.6s ease;
-    overflow: hidden;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui;
+    transition: all 0.5s ease;
 }
 
-/* Toggle button */
+/* CARD */
+.card {
+    text-align: center;
+    padding: 40px;
+    border-radius: 20px;
+    background: var(--card);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    z-index: 2;
+    max-width: 500px;
+    width: 90%;
+}
+
+/* TITLE */
+h1 {
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    opacity: 0.7;
+    margin-bottom: 20px;
+}
+
+/* COUNTDOWN */
+.countdown {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.time {
+    flex: 1;
+}
+
+.num {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+/* BUTTON */
 .toggle {
     position: absolute;
     top: 20px;
     right: 20px;
-    padding: 10px 15px;
-    border-radius: 8px;
     border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
     cursor: pointer;
     background: rgba(255,255,255,0.1);
     color: white;
-    backdrop-filter: blur(10px);
 }
 
-/* Content */
-.container {
-    text-align: center;
-    z-index: 2;
-}
-
-h1 {
-    font-size: 2.5rem;
-}
-
-.subtitle {
-    margin-bottom: 20px;
-    opacity: 0.8;
-}
-
-.message {
-    margin-top: 20px;
-    font-style: italic;
-    opacity: 0.7;
-}
-
-/* Countdown */
-.countdown {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.box {
-    padding: 20px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.08);
-}
-
-.number {
-    font-size: 2rem;
-    color: var(--accent);
-}
-
-/* Bars */
+/* BARS */
 .bars {
     position: absolute;
     inset: 0;
     display: flex;
     justify-content: space-around;
+    pointer-events: none;
 }
 
 .bar {
-    width: 8px;
-    height: 120%;
-    background: #aaa;
-    transition: transform 1s ease;
+    width: 6px;
+    height: 100%;
+    background: #888;
+    transition: transform 0.5s ease;
 }
 
-/* OPEN */
-.bars.open .bar:nth-child(odd) {
-    transform: translateX(-150px);
+/* MESSAGE */
+.message {
+    margin-top: 20px;
+    font-style: italic;
+    opacity: 0.8;
 }
 
-.bars.open .bar:nth-child(even) {
-    transform: translateX(150px);
+/* Creepy animation */
+body.creepy .card {
+    animation: flicker 3s infinite;
 }
 
-/* Creepy flicker */
 @keyframes flicker {
     0%,100% {opacity:1;}
-    50% {opacity:0.8;}
+    50% {opacity:0.85;}
 }
-
-body.creepy {
-    animation: flicker 2s infinite;
-}
-
 </style>
 </head>
 
 <body class="creepy">
 
-<button class="toggle" onclick="toggleMode()">Switch Mode</button>
+<button class="toggle" id="toggleBtn">😈 Creepy</button>
 
-<div class="container">
-    <h1 id="title">⛓️ Countdown to Freedom</h1>
-    <p class="subtitle">They said I’d be out soon...</p>
+<div class="card">
+    <h1 id="title">⛓️ Countdown</h1>
+    <p class="subtitle" id="subtitle">They said I’d be out soon...</p>
 
     <div class="countdown">
-        <div class="box"><div id="days" class="number">0</div>Days</div>
-        <div class="box"><div id="hours" class="number">0</div>Hours</div>
-        <div class="box"><div id="minutes" class="number">0</div>Minutes</div>
-        <div class="box"><div id="seconds" class="number">0</div>Seconds</div>
+        <div class="time"><div id="d" class="num">0</div>Days</div>
+        <div class="time"><div id="h" class="num">0</div>Hours</div>
+        <div class="time"><div id="m" class="num">0</div>Minutes</div>
+        <div class="time"><div id="s" class="num">0</div>Seconds</div>
     </div>
 
-    <div class="message" id="message"></div>
+    <div class="message" id="msg"></div>
 </div>
 
-<div class="bars" id="bars">
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
-</div>
+<div class="bars" id="bars"></div>
 
 <script>
-const endDate = new Date("2027-01-18T00:00:00").getTime();
-const startDate = new Date().getTime();
-const bars = document.getElementById("bars");
-const message = document.getElementById("message");
+// CREATE BARS
+const barsContainer = document.getElementById("bars");
+for(let i=0;i<10;i++){
+    const b=document.createElement("div");
+    b.className="bar";
+    barsContainer.appendChild(b);
+}
+
+const end = new Date("2027-01-18").getTime();
+const start = Date.now();
 
 let mode = "creepy";
 
 const creepyTexts = [
-    "The walls are breathing...",
-    "I hear footsteps...",
-    "Don’t look behind you.",
-    "They are watching."
+    "You hear that?",
+    "Something moved.",
+    "Don’t blink.",
+    "They know."
 ];
 
 const funnyTexts = [
-    "Still stuck here 😂",
-    "Freedom loading... 2%",
-    "Have you tried turning life off and on?",
-    "This is fine 🔥🐶"
+    "Still loading freedom 😂",
+    "Patience is overrated",
+    "Have you tried snacks?",
+    "Freedom.exe not found"
 ];
 
-function toggleMode() {
-    document.body.classList.toggle("creepy");
-    document.body.classList.toggle("funny");
+// TOGGLE
+document.getElementById("toggleBtn").onclick = () => {
+    if(mode === "creepy"){
+        mode = "funny";
+        document.body.className = "funny";
+        toggleBtn.innerText = "😂 Funny";
+        title.innerText = "😂 Still Waiting";
+        subtitle.innerText = "This is fine.";
+    } else {
+        mode = "creepy";
+        document.body.className = "creepy";
+        toggleBtn.innerText = "😈 Creepy";
+        title.innerText = "⛓️ Countdown";
+        subtitle.innerText = "They said I’d be out soon...";
+    }
+};
 
-    mode = (mode === "creepy") ? "funny" : "creepy";
-
-    document.getElementById("title").innerText =
-        mode === "creepy" ? "⛓️ Countdown to Freedom" : "😂 Waiting for Escape";
-}
-
-function updateCountdown() {
+// UPDATE
+function update(){
     const now = Date.now();
-    const distance = endDate - now;
+    const diff = end - now;
 
-    const total = endDate - startDate;
-    const progress = 1 - (distance / total);
+    const total = end - start;
+    const progress = 1 - diff/total;
 
-    document.getElementById("days").innerText = Math.floor(distance / (1000*60*60*24));
-    document.getElementById("hours").innerText = Math.floor((distance/(1000*60*60))%24);
-    document.getElementById("minutes").innerText = Math.floor((distance/(1000*60))%60);
-    document.getElementById("seconds").innerText = Math.floor((distance/1000)%60);
+    d.innerText = Math.floor(diff/86400000);
+    h.innerText = Math.floor((diff/3600000)%24);
+    m.innerText = Math.floor((diff/60000)%60);
+    s.innerText = Math.floor((diff/1000)%60);
 
-    // Messages
+    // TEXT
     const texts = mode === "creepy" ? creepyTexts : funnyTexts;
-    message.innerText = texts[Math.floor(Math.random() * texts.length)];
+    msg.innerText = texts[Math.floor(Math.random()*texts.length)];
 
-    // Bars opening
-    if (progress > 0.6) {
-        bars.classList.add("open");
-    }
+    // BARS PROGRESSIVE OPEN
+    document.querySelectorAll(".bar").forEach((bar,i)=>{
+        const offset = (i - 5) * 20;
+        bar.style.transform = `translateX(${offset * progress}px)`;
+    });
 
-    if (distance < 0) {
-        document.querySelector(".container").innerHTML =
-            "<h1>🕊️ FREE... or just another room?</h1>";
-        bars.classList.add("open");
+    if(diff < 0){
+        document.querySelector(".card").innerHTML = "<h1>🕊️ FREE</h1>";
     }
 }
 
-setInterval(updateCountdown, 1000);
+setInterval(update,1000);
 </script>
 
 </body>
