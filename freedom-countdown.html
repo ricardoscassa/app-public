@@ -5,140 +5,174 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Freedom Countdown</title>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
 <style>
 :root {
-    --bg: #0f172a;
-    --card: rgba(255,255,255,0.05);
-    --text: #e2e8f0;
-    --accent: #38bdf8;
-}
-
-/* THEMES */
-body.creepy {
-    --bg: #020617;
     --accent: #ef4444;
+    --bg: #000;
 }
 
-body.funny {
-    --bg: linear-gradient(135deg, #6366f1, #22c55e);
-    --accent: #facc15;
-}
-
-/* BASE */
 body {
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    color: var(--text);
+    margin:0;
+    height:100vh;
+    overflow:hidden;
     font-family: system-ui;
-    transition: all 0.5s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    background:var(--bg);
+    transition:0.5s;
+}
+
+/* FUNNY MODE */
+body.funny {
+    --accent:#22c55e;
+    background:linear-gradient(135deg,#6366f1,#22c55e);
 }
 
 /* CARD */
 .card {
-    text-align: center;
-    padding: 40px;
-    border-radius: 20px;
-    background: var(--card);
+    z-index:2;
+    text-align:center;
+    padding:40px;
+    border-radius:20px;
     backdrop-filter: blur(20px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    z-index: 2;
-    max-width: 500px;
-    width: 90%;
-}
-
-/* TITLE */
-h1 {
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    opacity: 0.7;
-    margin-bottom: 20px;
+    background: rgba(255,255,255,0.05);
+    width:90%;
+    max-width:520px;
 }
 
 /* COUNTDOWN */
 .countdown {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-}
-
-.time {
-    flex: 1;
+    display:flex;
+    justify-content:space-between;
+    margin-top:20px;
 }
 
 .num {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--accent);
+    font-size:2rem;
+    color:var(--accent);
 }
 
-/* BUTTON */
+/* BUTTONS */
 .toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 10px;
-    cursor: pointer;
-    background: rgba(255,255,255,0.1);
-    color: white;
+    position:absolute;
+    top:20px;
+    right:20px;
+    padding:10px;
+    border:none;
+    border-radius:10px;
+    background:rgba(255,255,255,0.1);
+    color:white;
+    cursor:pointer;
+}
+
+#escapeBtn {
+    margin-top:20px;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* SANITY */
+.sanity {
+    height:8px;
+    margin-top:20px;
+    background:#222;
+    border-radius:5px;
+}
+
+.sanity-fill {
+    height:100%;
+    width:100%;
+    background:lime;
 }
 
 /* BARS */
 .bars {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: space-around;
-    pointer-events: none;
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:space-around;
 }
 
 .bar {
-    width: 6px;
-    height: 100%;
-    background: #888;
-    transition: transform 0.5s ease;
+    width:6px;
+    height:100%;
+    background:#888;
 }
 
-/* MESSAGE */
+/* RUNNERS */
+.runner {
+    position:absolute;
+    width:40px;
+    height:80px;
+    background:orange;
+    border-radius:10px;
+    animation:run linear forwards;
+}
+
+.runner::before {
+    content:"";
+    position:absolute;
+    top:-15px;
+    left:8px;
+    width:25px;
+    height:15px;
+    background:yellow;
+}
+
+@keyframes run {
+    from { transform:translateX(-100px); }
+    to { transform:translateX(110vw); }
+}
+
+/* GLITCH */
+.glitch {
+    animation: glitch 0.2s infinite;
+}
+
+@keyframes glitch {
+    0%{transform:translate(1px,0);}
+    50%{transform:translate(-1px,1px);}
+    100%{transform:translate(1px,-1px);}
+}
+
 .message {
-    margin-top: 20px;
-    font-style: italic;
-    opacity: 0.8;
-}
-
-/* Creepy animation */
-body.creepy .card {
-    animation: flicker 3s infinite;
-}
-
-@keyframes flicker {
-    0%,100% {opacity:1;}
-    50% {opacity:0.85;}
+    margin-top:10px;
 }
 </style>
 </head>
 
-<body class="creepy">
+<body>
 
 <button class="toggle" id="toggleBtn">😈 Creepy</button>
 
-<div class="card">
+<div class="card" id="card">
     <h1 id="title">⛓️ Countdown</h1>
-    <p class="subtitle" id="subtitle">They said I’d be out soon...</p>
+    <p id="subtitle">They said I’d be out soon...</p>
 
     <div class="countdown">
-        <div class="time"><div id="d" class="num">0</div>Days</div>
-        <div class="time"><div id="h" class="num">0</div>Hours</div>
-        <div class="time"><div id="m" class="num">0</div>Minutes</div>
-        <div class="time"><div id="s" class="num">0</div>Seconds</div>
+        <div><div id="d" class="num">0</div>Days</div>
+        <div><div id="h" class="num">0</div>Hours</div>
+        <div><div id="m" class="num">0</div>Minutes</div>
+        <div><div id="s" class="num">0</div>Seconds</div>
     </div>
+
+    <div class="sanity">
+        <div id="sanity" class="sanity-fill"></div>
+    </div>
+
+    <button id="escapeBtn">🚪 ESCAPE</button>
+    <div id="escapeMsg"></div>
+
+    <canvas id="qrCanvas" style="margin-top:15px;"></canvas>
 
     <div class="message" id="msg"></div>
 </div>
@@ -157,64 +191,92 @@ for(let i=0;i<10;i++){
 const end = new Date("2027-01-18").getTime();
 const start = Date.now();
 
-let mode = "creepy";
+let mode="creepy";
 
-const creepyTexts = [
-    "You hear that?",
-    "Something moved.",
-    "Don’t blink.",
-    "They know."
-];
-
-const funnyTexts = [
-    "Still loading freedom 😂",
-    "Patience is overrated",
-    "Have you tried snacks?",
-    "Freedom.exe not found"
-];
-
-// TOGGLE
-document.getElementById("toggleBtn").onclick = () => {
-    if(mode === "creepy"){
-        mode = "funny";
-        document.body.className = "funny";
-        toggleBtn.innerText = "😂 Funny";
-        title.innerText = "😂 Still Waiting";
-        subtitle.innerText = "This is fine.";
+// TOGGLE MODE
+toggleBtn.onclick=()=>{
+    if(mode==="creepy"){
+        mode="funny";
+        document.body.classList.add("funny");
+        toggleBtn.innerText="😂 Funny";
+        title.innerText="😂 Still Waiting";
+        subtitle.innerText="This is fine.";
     } else {
-        mode = "creepy";
-        document.body.className = "creepy";
-        toggleBtn.innerText = "😈 Creepy";
-        title.innerText = "⛓️ Countdown";
-        subtitle.innerText = "They said I’d be out soon...";
+        mode="creepy";
+        document.body.classList.remove("funny");
+        toggleBtn.innerText="😈 Creepy";
+        title.innerText="⛓️ Countdown";
+        subtitle.innerText="They said I’d be out soon...";
     }
 };
 
-// UPDATE
+// ESCAPE BUTTON
+escapeBtn.onclick=()=>{
+    const r=Math.random();
+    if(r<0.7){
+        escapeMsg.innerText="❌ ESCAPE FAILED";
+    } else if(r<0.9){
+        escapeMsg.innerText="⚠️ LOCKDOWN";
+    } else {
+        escapeMsg.innerText="🚪 OPENING...";
+        setTimeout(()=>escapeMsg.innerText="❌ Nope.",2000);
+    }
+};
+
+// QR CODE
+QRCode.toCanvas(document.getElementById("qrCanvas"),window.location.href);
+
+// RUNNERS
+function spawnRunner(){
+    const r=document.createElement("div");
+    r.className="runner";
+    r.style.animationDuration=(Math.random()*3+3)+"s";
+    r.style.top=(Math.random()*80)+"%";
+    document.body.appendChild(r);
+    setTimeout(()=>r.remove(),7000);
+}
+
+setInterval(()=>{
+    if(Math.random()<0.3) spawnRunner();
+},1000);
+
+// UPDATE LOOP
 function update(){
-    const now = Date.now();
-    const diff = end - now;
+    const now=Date.now();
+    const diff=end-now;
+    const total=end-start;
+    const progress=1-diff/total;
 
-    const total = end - start;
-    const progress = 1 - diff/total;
+    d.innerText=Math.floor(diff/86400000);
+    h.innerText=Math.floor((diff/3600000)%24);
+    m.innerText=Math.floor((diff/60000)%60);
+    s.innerText=Math.floor((diff/1000)%60);
 
-    d.innerText = Math.floor(diff/86400000);
-    h.innerText = Math.floor((diff/3600000)%24);
-    m.innerText = Math.floor((diff/60000)%60);
-    s.innerText = Math.floor((diff/1000)%60);
+    // sanity
+    const sanity=100-progress*100;
+    document.getElementById("sanity").style.width=sanity+"%";
 
-    // TEXT
-    const texts = mode === "creepy" ? creepyTexts : funnyTexts;
-    msg.innerText = texts[Math.floor(Math.random()*texts.length)];
-
-    // BARS PROGRESSIVE OPEN
+    // bars
     document.querySelectorAll(".bar").forEach((bar,i)=>{
-        const offset = (i - 5) * 20;
-        bar.style.transform = `translateX(${offset * progress}px)`;
+        let offset=(i-5)*20;
+        let shake = sanity<30 ? (Math.random()*10-5):0;
+        bar.style.transform=`translateX(${offset*progress+shake}px)`;
     });
 
-    if(diff < 0){
-        document.querySelector(".card").innerHTML = "<h1>🕊️ FREE</h1>";
+    // messages + effects
+    if(mode==="creepy"){
+        msg.innerText=["ESCAPE FAILED","DON’T MOVE","THEY SEE YOU"][Math.floor(Math.random()*3)];
+        document.body.style.background=`rgba(${Math.random()*50},0,0,1)`;
+
+        if(sanity<30) card.classList.add("glitch");
+    } else {
+        msg.innerText=["😂 still here","snacks break?","almost free lol"][Math.floor(Math.random()*3)];
+        document.body.style.background=`hsl(${Math.random()*360},70%,50%)`;
+        card.classList.remove("glitch");
+    }
+
+    if(diff<0){
+        card.innerHTML="<h1>🕊️ YOU ARE FREE</h1>";
     }
 }
 
