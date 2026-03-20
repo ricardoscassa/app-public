@@ -772,9 +772,9 @@
             min-width: 0;
         }
 
-        /* --- FIX alignment between Status and Comment dropdowns --- */
+        /* --- Controls row alignment: Status and Comment sit flush side-by-side --- */
         .controls-row {
-            align-items: flex-start; /* Make both top-aligned first */
+            align-items: flex-start;
         }
 
         .control-wrapper {
@@ -783,35 +783,14 @@
             justify-content: flex-start;
         }
 
-        /* Ensure both dropdowns have identical height and top spacing */
-        .status-button,
-        .comment-textarea {
-            height: 44px;
-            line-height: 44px;
-            padding: 0 12px;
-            margin-top: 12px;
-            box-sizing: border-box;
-        }
-
-        /* Small tweak for Safari / Chrome pixel difference */
-        .comment-textarea {
-            margin-top: 4px; /* adjust +1 or -1px if still off */
-        }
-
-
-        .control-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #8E8E93;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-
+        /* Single unified status-button definition — applies to both Status and Comment buttons */
         .status-button {
             width: 100%;
             height: 44px;
-            padding: 0 12px;
+            line-height: 44px;
+            padding: 0 32px 0 12px; /* right pad leaves room for ▼ arrow */
+            margin-top: 0;
+            box-sizing: border-box;
             font-size: 16px;
             font-weight: 400;
             color: #1C1C1E;
@@ -828,10 +807,21 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            /* iOS touch optimization */
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             position: relative;
+        }
+
+        /* Label above each button — identical height on both columns keeps buttons flush */
+        .control-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8E8E93;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            line-height: 1.2;
+            min-height: 14px;
         }
 
         .status-button::after {
@@ -892,12 +882,24 @@
             background-color: #f0f0f0;
         }
 
+        .status-option.clear-option {
+            color: #dc3545;
+            border-bottom: 1px solid #f0f0f0;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        .status-option.clear-option:hover {
+            background-color: #fff5f5;
+            color: #c82333;
+        }
+
         /* Enhanced Comment Section with Predefined Choices */
         .comment-section {
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 0; /* alignment: spacing comes from .control-label margin-bottom only, same as status */
         }
 
         .comment-choices {
@@ -1299,11 +1301,11 @@
                 gap: 8px;
             }
             
-            .status-button,
-            .comment-textarea {
+            .status-button {
                 font-size: 15px;
                 height: 42px;
                 line-height: 42px;
+                padding: 0 28px 0 10px;
             }
             
             .control-label {
@@ -1425,16 +1427,6 @@
                 font-size: 0.9rem;
                 border-radius: 8px;
             }
-
-            .comment-textarea {
-                /* Use min-height instead of fixed height for better vertical alignment on small screens */
-                min-height: 44px;
-                font-size: 16px; /* Prevent zoom on iOS */
-                padding: 10px;
-                /* Reset line-height so text is not clipped */
-                line-height: normal;
-                height: auto;
-            }
         }
         
         @media (max-width: 480px) {
@@ -1480,12 +1472,6 @@
                 font-size: 1rem;
                 border-radius: 10px;
             }
-
-            .comment-textarea {
-                min-height: 48px; /* Even larger touch target */
-                font-size: 16px;
-                padding: 12px;
-            }
         }
 
         /* iOS Safari specific optimizations */
@@ -1509,6 +1495,41 @@
   .edit-dropdown-section {
     display: none !important;
   }
+}
+
+/* ── Tablet (769px – 1024px): keep buttons side-by-side, slightly smaller ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .status-button {
+        font-size: 14px;
+        height: 42px;
+        line-height: 42px;
+        padding: 0 26px 0 10px;
+    }
+    .control-label {
+        font-size: 10px;
+    }
+    .controls-row {
+        gap: 8px;
+    }
+}
+
+/* ── Phone (≤ 480px): stack Status above Comment for breathing room ── */
+@media (max-width: 480px) {
+    #codeChecksContainer .controls-row,
+    #assetTagz2ChecksContainer .controls-row {
+        flex-direction: column;
+        gap: 6px;
+    }
+    #codeChecksContainer .control-wrapper,
+    #assetTagz2ChecksContainer .control-wrapper {
+        width: 100%;
+    }
+    .status-button {
+        font-size: 16px; /* prevent iOS zoom */
+        height: 44px;
+        line-height: 44px;
+        padding: 0 32px 0 12px;
+    }
 }
 
 /* ── ECS Quick Entry Mode ─────────────────────────────────── */
@@ -1706,14 +1727,7 @@
         }
       }
 
-      /* Additional mobile tweaks to ensure comment dropdown text isn't cut off on very small screens */
-      @media (max-width: 480px) {
-        .comment-textarea {
-          /* Reset line height and allow the element to grow as needed */
-          line-height: normal;
-          height: auto;
-        }
-      }
+      /* Additional mobile tweaks — comment-textarea no longer used in ECS; nothing needed here */
     </style>
 </head>
 <body>
@@ -1980,7 +1994,7 @@ Room Codes (Room- Codes)
                 <div class="code-header">
                     <h2 id="currentCodeRoomTitle" class="code-title">Room: 1HLF0104ZL</h2>
                     <button id="ecsQuickEntryToggle" class="ecs-mode-toggle" title="Toggle Quick Entry mode">
-                        <span class="toggle-label"> Quick Entry Mode</span>
+                    <span class="toggle-label"> Quick Entry Mode</span>
                     </button>
                     <div id="codeRoomSelect" class="custom-dropdown">
                         <button class="custom-dropdown-button" type="button">
@@ -2611,7 +2625,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             document.getElementById('ecsQuickEntryToggle').addEventListener('click', function() {
                 appState.ecsQuickEntryMode = !appState.ecsQuickEntryMode;
                 this.classList.toggle('active', appState.ecsQuickEntryMode);
-                this.querySelector('.toggle-label').textContent = appState.ecsQuickEntryMode ? 'Search Mode' : 'List Mode';
+                this.querySelector('.toggle-label').textContent = appState.ecsQuickEntryMode ? ' List Mode' : ' Quick Entry Mode';
                 saveDataToStorage();
                 if (appState.ecsQuickEntryMode) {
                     renderEcsQuickEntryMode();
@@ -3006,7 +3020,7 @@ const flexEcsCodeListTextarea = document.getElementById('flexEcsCodeList');
             if (toggleBtn) {
                 const active = !!appState.ecsQuickEntryMode;
                 toggleBtn.classList.toggle('active', active);
-                toggleBtn.querySelector('.toggle-label').textContent = active ? 'Search Mode' : 'List Mode';
+                toggleBtn.querySelector('.toggle-label').textContent = active ? ' List Mode' : ' Quick Entry Mode';
             }
         }
 
@@ -4341,7 +4355,10 @@ barcodeWrapper.appendChild(barcodeInput);
                 const statusOptions = document.createElement('div');
                 statusOptions.className = 'status-options';
                 statusOptions.dataset.codeId = uniqueCodeId;
-                
+
+                // Clear option at top (hidden until something is selected)
+                statusOptions.appendChild(buildClearOption(uniqueCodeId, selectCodeStatus, false));
+
                 codeStatusOptions.forEach((status, index) => {
                     const option = document.createElement('div');
                     option.className = 'status-option';
@@ -4355,77 +4372,66 @@ barcodeWrapper.appendChild(barcodeInput);
                 statusWrapper.appendChild(statusOptions);
                 controlsRow.appendChild(statusWrapper);
 
-                // Comment wrapper
+                // Comment wrapper — styled identically to the Status button
                 const commentWrapper = document.createElement('div');
                 commentWrapper.className = 'control-wrapper comment-section';
-                
+                commentWrapper.style.position = 'relative';
+
                 const commentLabel = document.createElement('div');
                 commentLabel.className = 'control-label';
                 commentLabel.textContent = 'Comment';
                 commentWrapper.appendChild(commentLabel);
 
-                // Create dropdown for predefined choices
-                const commentSelect = document.createElement('select');
-                commentSelect.className = 'comment-textarea';
-                commentSelect.dataset.codeId = uniqueCodeId;
-                
-                // Add default option
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Select comment...';
-                commentSelect.appendChild(defaultOption);
-                
-                // Add predefined choices
-                commentOptions.forEach(choice => {
-                    const option = document.createElement('option');
-                    option.value = choice;
-                    option.textContent = choice;
-                    commentSelect.appendChild(option);
+                const commentButton = document.createElement('button');
+                commentButton.className = 'status-button';
+                commentButton.textContent = 'Select comment...';
+                commentButton.dataset.codeId = uniqueCodeId;
+                commentButton.dataset.role = 'comment-btn';
+                commentButton.addEventListener('click', toggleCommentOptions);
+                commentWrapper.appendChild(commentButton);
+
+                const commentOptionsDiv = document.createElement('div');
+                commentOptionsDiv.className = 'status-options';
+                commentOptionsDiv.dataset.codeId = uniqueCodeId;
+                commentOptionsDiv.dataset.role = 'comment-options';
+
+                // Clear option at top (hidden until something is selected)
+                commentOptionsDiv.appendChild(buildClearOption(uniqueCodeId, selectCodeComment, false));
+
+                commentOptions.forEach((choice, index) => {
+                    const opt = document.createElement('div');
+                    opt.className = 'status-option';
+                    opt.textContent = choice;
+                    opt.dataset.codeId = uniqueCodeId;
+                    opt.dataset.commentIndex = index;
+                    opt.addEventListener('click', selectCodeComment);
+                    commentOptionsDiv.appendChild(opt);
                 });
-                
-                // Add "Custom" option
-                const customOption = document.createElement('option');
-                customOption.value = '__custom__';
-                customOption.textContent = 'Custom...';
-                commentSelect.appendChild(customOption);
-                
-                commentSelect.addEventListener('change', function(event) {
-                    const codeId = event.target.dataset.codeId;
-                    const selectedValue = event.target.value;
-                    
-                    if (selectedValue === '__custom__') {
-                        // Show custom input field
-                        if (customInput) {
-                            customInput.classList.add('show');
-                            customInput.focus();
-                        }
-                    } else {
-                        // Hide custom input field and save selected value
-                        if (customInput) {
-                            customInput.classList.remove('show');
-                            customInput.value = '';
-                        }
-                        appState.codeSpecificComments[codeId] = selectedValue;
-                        saveDataToStorage();
-                    }
-                });
-                
-                commentWrapper.appendChild(commentSelect);
-                
-                // Create custom input field
+
+                // Custom option at the bottom
+                const customOptDiv = document.createElement('div');
+                customOptDiv.className = 'status-option';
+                customOptDiv.textContent = 'Custom...';
+                customOptDiv.dataset.codeId = uniqueCodeId;
+                customOptDiv.dataset.commentIndex = '__custom__';
+                customOptDiv.addEventListener('click', selectCodeComment);
+                commentOptionsDiv.appendChild(customOptDiv);
+
+                commentWrapper.appendChild(commentOptionsDiv);
+
+                // Custom free-text input (hidden until "Custom..." is chosen)
                 const customInput = document.createElement('textarea');
                 customInput.className = 'custom-comment-input';
                 customInput.dataset.codeId = uniqueCodeId;
                 customInput.placeholder = 'Enter your custom comment here...';
                 customInput.rows = 2;
-                
+
                 customInput.addEventListener('input', function(event) {
                     const codeId = event.target.dataset.codeId;
-                    const value = event.target.value;
-                    appState.codeSpecificComments[codeId] = value;
+                    appState.codeSpecificComments[codeId] = event.target.value;
                     saveDataToStorage();
                 });
-                
+
                 commentWrapper.appendChild(customInput);
                 controlsRow.appendChild(commentWrapper);
 
@@ -4563,6 +4569,8 @@ barcodeWrapper.appendChild(barcodeInput);
             const statusOptionsDiv = document.createElement('div');
             statusOptionsDiv.className = 'status-options';
             statusOptionsDiv.dataset.codeId = uniqueCodeId;
+            // Clear option — visible immediately since this row already has a saved state
+            statusOptionsDiv.appendChild(buildClearOption(uniqueCodeId, selectCodeStatus, savedStatusIndex !== null && savedStatusIndex !== undefined));
             codeStatusOptions.forEach((status, i) => {
                 const opt = document.createElement('div');
                 opt.className = 'status-option';
@@ -4575,43 +4583,61 @@ barcodeWrapper.appendChild(barcodeInput);
             statusWrapper.appendChild(statusOptionsDiv);
             controlsRow.appendChild(statusWrapper);
 
-            // --- Comment wrapper ---
+            // --- Comment wrapper --- (same button+options style as Status)
             const commentWrapper = document.createElement('div');
             commentWrapper.className = 'control-wrapper comment-section';
+            commentWrapper.style.position = 'relative';
 
             const commentLabel = document.createElement('div');
             commentLabel.className = 'control-label';
             commentLabel.textContent = 'Comment';
             commentWrapper.appendChild(commentLabel);
 
-            const commentSelect = document.createElement('select');
-            commentSelect.className = 'comment-textarea';
-            commentSelect.dataset.codeId = uniqueCodeId;
+            const commentButton = document.createElement('button');
+            commentButton.className = 'status-button';
+            commentButton.dataset.codeId = uniqueCodeId;
+            commentButton.dataset.role = 'comment-btn';
+            commentButton.addEventListener('click', toggleCommentOptions);
 
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = 'Select comment...';
-            commentSelect.appendChild(defaultOpt);
-
-            commentOptions.forEach(choice => {
-                const opt = document.createElement('option');
-                opt.value = choice;
-                opt.textContent = choice;
-                commentSelect.appendChild(opt);
-            });
-
-            const customOpt = document.createElement('option');
-            customOpt.value = '__custom__';
-            customOpt.textContent = 'Custom...';
-            commentSelect.appendChild(customOpt);
-
-            // Restore saved comment state
             const matchingChoice = commentOptions.find(c => c === savedComment);
             if (matchingChoice) {
-                commentSelect.value = matchingChoice;
+                commentButton.textContent = matchingChoice;
+                commentButton.classList.add('selected');
             } else if (savedComment) {
-                commentSelect.value = '__custom__';
+                commentButton.textContent = 'Custom...';
+                commentButton.classList.add('selected');
+            } else {
+                commentButton.textContent = 'Select comment...';
             }
+            commentWrapper.appendChild(commentButton);
+
+            const commentOptionsDiv = document.createElement('div');
+            commentOptionsDiv.className = 'status-options';
+            commentOptionsDiv.dataset.codeId = uniqueCodeId;
+            commentOptionsDiv.dataset.role = 'comment-options';
+
+            // Clear option — visible if a comment is already saved
+            commentOptionsDiv.appendChild(buildClearOption(uniqueCodeId, selectCodeComment, !!savedComment));
+
+            commentOptions.forEach((choice, i) => {
+                const opt = document.createElement('div');
+                opt.className = 'status-option';
+                opt.textContent = choice;
+                opt.dataset.codeId = uniqueCodeId;
+                opt.dataset.commentIndex = i;
+                opt.addEventListener('click', selectCodeComment);
+                commentOptionsDiv.appendChild(opt);
+            });
+
+            const customOptDiv = document.createElement('div');
+            customOptDiv.className = 'status-option';
+            customOptDiv.textContent = 'Custom...';
+            customOptDiv.dataset.codeId = uniqueCodeId;
+            customOptDiv.dataset.commentIndex = '__custom__';
+            customOptDiv.addEventListener('click', selectCodeComment);
+            commentOptionsDiv.appendChild(customOptDiv);
+
+            commentWrapper.appendChild(commentOptionsDiv);
 
             const customInput = document.createElement('textarea');
             customInput.className = 'custom-comment-input';
@@ -4623,25 +4649,11 @@ barcodeWrapper.appendChild(barcodeInput);
                 customInput.value = savedComment;
             }
 
-            commentSelect.addEventListener('change', function(e) {
-                const val = e.target.value;
-                if (val === '__custom__') {
-                    customInput.classList.add('show');
-                    customInput.focus();
-                } else {
-                    customInput.classList.remove('show');
-                    customInput.value = '';
-                    appState.codeSpecificComments[uniqueCodeId] = val;
-                    saveDataToStorage();
-                }
-            });
-
             customInput.addEventListener('input', function(e) {
                 appState.codeSpecificComments[uniqueCodeId] = e.target.value;
                 saveDataToStorage();
             });
 
-            commentWrapper.appendChild(commentSelect);
             commentWrapper.appendChild(customInput);
             controlsRow.appendChild(commentWrapper);
 
@@ -4869,41 +4881,147 @@ barcodeWrapper.appendChild(barcodeInput);
         function toggleStatusOptions(event) {
             event.stopPropagation();
             const codeId = event.target.dataset.codeId;
-            const statusOptions = document.querySelector(`.status-options[data-code-id="${codeId}"]`);
-            
-            // Close all other status options
+            const statusOptions = event.target.parentElement.querySelector('.status-options:not([data-role])');
+
+            // Close all other open panels
             document.querySelectorAll('.status-options').forEach(options => {
-                if (options !== statusOptions) {
-                    options.classList.remove('active');
-                }
+                if (options !== statusOptions) options.classList.remove('active');
             });
-            
+
             statusOptions.classList.toggle('active');
+
+            // Show clear option only if something is currently selected
+            const hasSelection = appState.checkData[codeId] !== null && appState.checkData[codeId] !== undefined;
+            refreshClearOption(statusOptions, hasSelection);
         }
 
         function selectCodeStatus(event) {
             const codeId = event.target.dataset.codeId;
-            const statusIndex = parseInt(event.target.dataset.statusIndex);
+            const statusIndex = event.target.dataset.statusIndex;
             const statusText = event.target.textContent;
-            
-            appState.checkData[codeId] = statusIndex;
-            
-            const statusButton = document.querySelector(`.status-button[data-code-id="${codeId}"]`);
-            statusButton.textContent = statusText;
-            statusButton.classList.add('selected');
-            
-            const statusOptions = document.querySelector(`.status-options[data-code-id="${codeId}"]`);
-            statusOptions.classList.remove('active');
-            
+
+            // Find panel — status button selector excludes comment-btn role
+            const statusButton = document.querySelector(`.status-button:not([data-role])[data-code-id="${codeId}"]`);
+            const statusOptionsPanel = event.target.closest('.status-options');
+
+            if (statusIndex === '__clear__') {
+                // Clear the selection
+                appState.checkData[codeId] = null;
+                if (statusButton) {
+                    statusButton.textContent = 'Select Status';
+                    statusButton.classList.remove('selected');
+                }
+            } else {
+                appState.checkData[codeId] = parseInt(statusIndex);
+                if (statusButton) {
+                    statusButton.textContent = statusText;
+                    statusButton.classList.add('selected');
+                }
+            }
+
+            if (statusOptionsPanel) statusOptionsPanel.classList.remove('active');
+            // Refresh the clear option visibility in this panel
+            refreshClearOption(statusOptionsPanel, appState.checkData[codeId] !== null && appState.checkData[codeId] !== undefined);
             saveDataToStorage();
         }
 
-        // Close status options when clicking outside
+        // Close status AND comment options when clicking outside
         document.addEventListener('click', () => {
             document.querySelectorAll('.status-options').forEach(options => {
                 options.classList.remove('active');
             });
         });
+
+        /** Builds a "✕ Clear selection" item for a panel, hidden by default */
+        function buildClearOption(codeId, handler, isVisible) {
+            const clear = document.createElement('div');
+            clear.className = 'status-option clear-option';
+            clear.textContent = '✕  Clear selection';
+            clear.dataset.codeId = codeId;
+            clear.dataset.statusIndex = '__clear__';   // used by selectCodeStatus
+            clear.dataset.commentIndex = '__clear__';  // used by selectCodeComment
+            clear.style.display = isVisible ? 'block' : 'none';
+            clear.addEventListener('click', handler);
+            return clear;
+        }
+
+        /** Show or hide the clear option inside a panel based on whether a value is selected */
+        function refreshClearOption(panel, hasSelection) {
+            if (!panel) return;
+            const clearEl = panel.querySelector('.clear-option');
+            if (clearEl) clearEl.style.display = hasSelection ? 'block' : 'none';
+        }
+
+        function toggleCommentOptions(event) {
+            event.stopPropagation();
+            const codeId = event.target.dataset.codeId;
+            const commentOptions = event.target.parentElement.querySelector('.status-options[data-role="comment-options"]');
+            if (!commentOptions) return;
+
+            // Close all other open panels (status + comment)
+            document.querySelectorAll('.status-options').forEach(el => {
+                if (el !== commentOptions) el.classList.remove('active');
+            });
+
+            commentOptions.classList.toggle('active');
+
+            // Show clear option only if a comment is currently saved
+            const hasSelection = !!(appState.codeSpecificComments[codeId]);
+            refreshClearOption(commentOptions, hasSelection);
+        }
+
+        function selectCodeComment(event) {
+            const codeId = event.target.dataset.codeId;
+            const commentIndex = event.target.dataset.commentIndex;
+            const commentText = event.target.textContent;
+
+            const wrapper = event.target.closest('.control-wrapper');
+            const commentButton = wrapper ? wrapper.querySelector('[data-role="comment-btn"]') : document.querySelector(`[data-role="comment-btn"][data-code-id="${codeId}"]`);
+            const customInput = wrapper ? wrapper.querySelector('.custom-comment-input') : document.querySelector(`.custom-comment-input[data-code-id="${codeId}"]`);
+            const optionsPanel = event.target.closest('.status-options');
+
+            if (commentIndex === '__clear__') {
+                // Clear the selection
+                appState.codeSpecificComments[codeId] = '';
+                if (commentButton) {
+                    commentButton.textContent = 'Select comment...';
+                    commentButton.classList.remove('selected');
+                }
+                if (customInput) {
+                    customInput.classList.remove('show');
+                    customInput.value = '';
+                }
+                if (optionsPanel) optionsPanel.classList.remove('active');
+                refreshClearOption(optionsPanel, false);
+                saveDataToStorage();
+                return;
+            }
+
+            if (commentIndex === '__custom__') {
+                if (commentButton) {
+                    commentButton.textContent = 'Custom...';
+                    commentButton.classList.add('selected');
+                }
+                if (customInput) {
+                    customInput.classList.add('show');
+                    customInput.focus();
+                }
+            } else {
+                if (commentButton) {
+                    commentButton.textContent = commentText;
+                    commentButton.classList.add('selected');
+                }
+                if (customInput) {
+                    customInput.classList.remove('show');
+                    customInput.value = '';
+                }
+                appState.codeSpecificComments[codeId] = commentText;
+                saveDataToStorage();
+            }
+
+            if (optionsPanel) optionsPanel.classList.remove('active');
+            refreshClearOption(optionsPanel, true);
+        }
 
         // Room status functions
         function setRoomStatus(status) {
@@ -4961,27 +5079,25 @@ barcodeWrapper.appendChild(barcodeInput);
                     }
                 }
 
-                // Update comment dropdown and custom input
-                const commentSelect = document.querySelector(`.comment-textarea[data-code-id="${uniqueCodeId}"]`);
+                // Update comment button and custom input
+                const commentButton = document.querySelector(`[data-role="comment-btn"][data-code-id="${uniqueCodeId}"]`);
                 const customInput = document.querySelector(`.custom-comment-input[data-code-id="${uniqueCodeId}"]`);
-                
-                if (commentSelect && customInput) {
-                    // Check if the comment matches any predefined choice
+
+                if (commentButton && customInput) {
                     const matchingChoice = commentOptions.find(choice => choice === comment);
-                    
                     if (matchingChoice) {
-                        // Set dropdown to the matching choice
-                        commentSelect.value = matchingChoice;
+                        commentButton.textContent = matchingChoice;
+                        commentButton.classList.add('selected');
                         customInput.classList.remove('show');
                         customInput.value = '';
                     } else if (comment) {
-                        // Set dropdown to "Custom" and show custom input with the value
-                        commentSelect.value = '__custom__';
+                        commentButton.textContent = 'Custom...';
+                        commentButton.classList.add('selected');
                         customInput.classList.add('show');
                         customInput.value = comment;
                     } else {
-                        // No comment selected
-                        commentSelect.value = '';
+                        commentButton.textContent = 'Select comment...';
+                        commentButton.classList.remove('selected');
                         customInput.classList.remove('show');
                         customInput.value = '';
                     }
