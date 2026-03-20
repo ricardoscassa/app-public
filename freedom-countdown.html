@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Countdown Escape</title>
+
+<style>
+:root {
+    --bg: #020617;
+    --text: #e2e8f0;
+    --accent: #38bdf8;
+}
+
+/* THEMES */
+body.creepy {
+    background: radial-gradient(circle, #1a0000, #000);
+    --accent: #ef4444;
+}
+
+body.funny {
+    background: linear-gradient(135deg, #38bdf8, #a78bfa);
+    --accent: #22c55e;
+    color: #fff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: system-ui;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.6s ease;
+    overflow: hidden;
+}
+
+/* Toggle button */
+.toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+/* Content */
+.container {
+    text-align: center;
+    z-index: 2;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+.subtitle {
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.message {
+    margin-top: 20px;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Countdown */
+.countdown {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.box {
+    padding: 20px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+}
+
+.number {
+    font-size: 2rem;
+    color: var(--accent);
+}
+
+/* Bars */
+.bars {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-around;
+}
+
+.bar {
+    width: 8px;
+    height: 120%;
+    background: #aaa;
+    transition: transform 1s ease;
+}
+
+/* OPEN */
+.bars.open .bar:nth-child(odd) {
+    transform: translateX(-150px);
+}
+
+.bars.open .bar:nth-child(even) {
+    transform: translateX(150px);
+}
+
+/* Creepy flicker */
+@keyframes flicker {
+    0%,100% {opacity:1;}
+    50% {opacity:0.8;}
+}
+
+body.creepy {
+    animation: flicker 2s infinite;
+}
+
+</style>
+</head>
+
+<body class="creepy">
+
+<button class="toggle" onclick="toggleMode()">Switch Mode</button>
+
+<div class="container">
+    <h1 id="title">⛓️ Countdown to Freedom</h1>
+    <p class="subtitle">They said I’d be out soon...</p>
+
+    <div class="countdown">
+        <div class="box"><div id="days" class="number">0</div>Days</div>
+        <div class="box"><div id="hours" class="number">0</div>Hours</div>
+        <div class="box"><div id="minutes" class="number">0</div>Minutes</div>
+        <div class="box"><div id="seconds" class="number">0</div>Seconds</div>
+    </div>
+
+    <div class="message" id="message"></div>
+</div>
+
+<div class="bars" id="bars">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+</div>
+
+<script>
+const endDate = new Date("2027-01-18T00:00:00").getTime();
+const startDate = new Date().getTime();
+const bars = document.getElementById("bars");
+const message = document.getElementById("message");
+
+let mode = "creepy";
+
+const creepyTexts = [
+    "The walls are breathing...",
+    "I hear footsteps...",
+    "Don’t look behind you.",
+    "They are watching."
+];
+
+const funnyTexts = [
+    "Still stuck here 😂",
+    "Freedom loading... 2%",
+    "Have you tried turning life off and on?",
+    "This is fine 🔥🐶"
+];
+
+function toggleMode() {
+    document.body.classList.toggle("creepy");
+    document.body.classList.toggle("funny");
+
+    mode = (mode === "creepy") ? "funny" : "creepy";
+
+    document.getElementById("title").innerText =
+        mode === "creepy" ? "⛓️ Countdown to Freedom" : "😂 Waiting for Escape";
+}
+
+function updateCountdown() {
+    const now = Date.now();
+    const distance = endDate - now;
+
+    const total = endDate - startDate;
+    const progress = 1 - (distance / total);
+
+    document.getElementById("days").innerText = Math.floor(distance / (1000*60*60*24));
+    document.getElementById("hours").innerText = Math.floor((distance/(1000*60*60))%24);
+    document.getElementById("minutes").innerText = Math.floor((distance/(1000*60))%60);
+    document.getElementById("seconds").innerText = Math.floor((distance/1000)%60);
+
+    // Messages
+    const texts = mode === "creepy" ? creepyTexts : funnyTexts;
+    message.innerText = texts[Math.floor(Math.random() * texts.length)];
+
+    // Bars opening
+    if (progress > 0.6) {
+        bars.classList.add("open");
+    }
+
+    if (distance < 0) {
+        document.querySelector(".container").innerHTML =
+            "<h1>🕊️ FREE... or just another room?</h1>";
+        bars.classList.add("open");
+    }
+}
+
+setInterval(updateCountdown, 1000);
+</script>
+
+</body>
+</html>
