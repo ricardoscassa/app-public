@@ -1713,57 +1713,142 @@
 }
 
 /* ── Camera / Photo Feature ───────────────────────────────── */
-.camera-btn {
-    display: inline-flex;
+
+/* The camera pill sits at the bottom of each ECS row */
+.camera-row {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0 14px;
-    border: none;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.2s, transform 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-    box-shadow: 0 2px 8px rgba(26,115,232,0.35);
-}
-.camera-btn:active { transform: scale(0.93); }
-.camera-btn .cam-count {
-    font-size: 12px;
-    font-weight: 700;
-    background: rgba(255,255,255,0.25);
-    border-radius: 8px;
-    padding: 1px 5px;
-    min-width: 18px;
-    text-align: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #F0F0F5;
 }
 
-/* Hidden file input used to trigger camera on iOS/Android */
+/* 
+   iOS CRITICAL: The file input MUST be visible and tappable.
+   We style it to look like a button instead of hiding it, 
+   so iOS Safari accepts it as a direct user interaction.
+   We overlay a label on top styled as the button.
+*/
+.camera-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* Apple SF-style pill button */
+    background: linear-gradient(180deg, #2C2C2E 0%, #1C1C1E 100%);
+    color: #FFFFFF;
+    border-radius: 14px;
+    padding: 0 18px;
+    height: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    letter-spacing: -0.2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    /* Subtle glass shine */
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.08) inset,
+        0 4px 12px rgba(0,0,0,0.3);
+    transition: opacity 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.camera-label:active { opacity: 0.75; }
+
+.camera-label .cam-icon {
+    font-size: 20px;
+    line-height: 1;
+    /* SF Symbols camera look */
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+}
+
+.camera-label .cam-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: -0.1px;
+}
+
+/* Photo count badge — red iOS-style notification dot */
+.cam-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #FF3B30;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    display: none;
+}
+.cam-badge.visible { display: flex; }
+
+/* The actual file input — must remain visible for iOS tap to register,
+   but we make it transparent and positioned over the label */
 .camera-file-input {
     position: absolute;
-    left: -9999px;
+    inset: 0;
     opacity: 0;
-    width: 1px;
-    height: 1px;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    font-size: 0; /* prevent any text */
+    /* iOS: must NOT be display:none or visibility:hidden */
+    z-index: 2;
 }
+
+/* View photos button — separate from the file input label */
+.cam-view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 50px;
+    padding: 0 14px;
+    background: #F2F2F7;
+    color: #1C1C1E;
+    border: none;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: opacity 0.15s;
+    display: none; /* shown only when photos exist */
+}
+.cam-view-btn.visible { display: flex; }
+.cam-view-btn:active { opacity: 0.7; }
 
 /* Photo viewer modal */
 .photo-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.88);
+    background: rgba(0,0,0,0.92);
     z-index: 9000;
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: env(safe-area-inset-top, 20px) 0 env(safe-area-inset-bottom, 20px);
+    /* iOS safe areas */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -1775,21 +1860,30 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    padding: 16px 16px 8px;
     color: white;
+    position: sticky;
+    top: 0;
+    background: rgba(28,28,30,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10;
 }
 .photo-modal-header h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
 }
 .photo-modal-close {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.12);
     border: none;
     color: white;
-    font-size: 22px;
+    font-size: 16px;
+    font-weight: 600;
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1801,17 +1895,17 @@
     width: 100%;
     max-width: 700px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-    padding: 0 12px 20px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    padding: 12px;
 }
 
 .photo-thumb {
     position: relative;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     aspect-ratio: 4/3;
-    background: #222;
+    background: #2C2C2E;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 .photo-thumb img {
@@ -1825,57 +1919,54 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(0,0,0,0.65);
+    background: linear-gradient(transparent, rgba(0,0,0,0.72));
     color: white;
     font-size: 10px;
-    padding: 4px 6px;
+    padding: 16px 6px 5px;
     line-height: 1.3;
 }
 .photo-thumb-delete {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    background: rgba(220,53,69,0.85);
+    top: 5px;
+    right: 5px;
+    background: rgba(28,28,30,0.7);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     -webkit-tap-highlight-color: transparent;
 }
 
 .photo-download-bar {
     width: 100%;
     max-width: 700px;
-    padding: 10px 12px;
+    padding: 8px 12px 12px;
     display: flex;
     gap: 10px;
-    flex-wrap: wrap;
 }
 .photo-download-bar .button {
     flex: 1;
-    min-width: 140px;
     font-size: 0.95rem;
-}
-
-/* Camera button row inside each ECS code row */
-.camera-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    flex-wrap: wrap;
 }
 
 /* Download all photos button in action-buttons area */
 #downloadAllPhotosBtn {
-    background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+    background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
     color: white;
+}
+
+@media (max-width: 480px) {
+    .camera-label { height: 46px; padding: 0 14px; font-size: 14px; }
+    .cam-view-btn { height: 46px; padding: 0 12px; }
+    .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 8px; }
 }
 </style>
 
@@ -6670,99 +6761,114 @@ function renderFlexBarcodeRows() {
         const cameraRow = document.createElement('div');
         cameraRow.className = 'camera-row';
 
-        // Hidden file input — capture="environment" opens rear camera on iOS + Android
+        const inputId = `cam-input-${uniqueCodeId.replace(/[^a-z0-9]/gi, '_')}`;
+
+        // ── iOS-SAFE: file input positioned inside its label ──
+        // On iOS Safari, programmatic .click() on a hidden input is blocked.
+        // The only reliable method is a <label> wrapping or pointing to the input,
+        // with the input itself being visible (opacity:0 overlay, NOT display:none).
+        const camLabel = document.createElement('label');
+        camLabel.className = 'camera-label';
+        camLabel.htmlFor = inputId;
+        camLabel.setAttribute('role', 'button');
+        camLabel.setAttribute('aria-label', 'Take photo');
+
+        // Camera SF-symbol style icon
+        const camIcon = document.createElement('span');
+        camIcon.className = 'cam-icon';
+        camIcon.textContent = '􀌞'; // SF Symbol: camera.fill fallback to emoji
+        camIcon.style.fontFamily = '-apple-system, BlinkMacSystemFont, sans-serif';
+        // Fallback to emoji for non-Apple
+        camIcon.textContent = '';
+        camIcon.innerHTML = `<svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 1L6.5 3H2C1.45 3 1 3.45 1 4V16C1 16.55 1.45 17 2 17H20C20.55 17 21 16.55 21 16V4C21 3.45 20.55 3 20 3H15.5L14 1H8Z" fill="white" stroke="white" stroke-width="0.3"/>
+            <circle cx="11" cy="10" r="3.5" fill="#1C1C1E"/>
+            <circle cx="11" cy="10" r="2.2" fill="white"/>
+            <circle cx="11" cy="10" r="1" fill="#1C1C1E"/>
+            <circle cx="17.5" cy="6" r="1" fill="#3A3A3C"/>
+        </svg>`;
+
+        const camText = document.createElement('span');
+        camText.className = 'cam-text';
+        camText.textContent = 'Camera';
+
+        // Red iOS badge for photo count
+        const badge = document.createElement('span');
+        badge.className = 'cam-badge';
+        badge.setAttribute('aria-label', 'photos taken');
+
+        // The actual file input — transparent overlay inside the label
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
         fileInput.setAttribute('capture', 'environment');
         fileInput.className = 'camera-file-input';
-        fileInput.id = `cam-input-${uniqueCodeId.replace(/[^a-z0-9]/gi, '_')}`;
+        fileInput.id = inputId;
 
-        const camBtn = document.createElement('button');
-        camBtn.className = 'camera-btn';
-        camBtn.innerHTML = '📷 <span class="cam-count" style="display:none">0</span>';
-        camBtn.title = 'Take / view photos for this code';
-        camBtn.type = 'button';
+        camLabel.appendChild(camIcon);
+        camLabel.appendChild(camText);
+        camLabel.appendChild(badge);
+        camLabel.appendChild(fileInput); // input INSIDE label = iOS safe
 
-        // Update the count badge
+        // ── Separate "View Photos" button (no file input needed) ──
+        const viewBtn = document.createElement('button');
+        viewBtn.type = 'button';
+        viewBtn.className = 'cam-view-btn';
+        viewBtn.innerHTML = `<svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="1" width="14" height="10" rx="2" stroke="#1C1C1E" stroke-width="1.5"/>
+            <rect x="3" y="3" width="4" height="3" rx="0.5" fill="#8E8E93"/>
+            <rect x="9" y="3" width="4" height="3" rx="0.5" fill="#8E8E93"/>
+            <rect x="3" y="7.5" width="10" height="1" rx="0.5" fill="#C7C7CC"/>
+        </svg> <span class="view-count"></span> Photos`;
+        viewBtn.setAttribute('aria-label', 'View photos');
+
+        // ── Update badge and view button count ──
         async function refreshCount() {
             try {
                 const photos = await getPhotosByCodeId(uniqueCodeId);
-                const badge = camBtn.querySelector('.cam-count');
-                if (photos.length > 0) {
-                    badge.textContent = photos.length;
-                    badge.style.display = 'inline-block';
+                const count = photos.length;
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.classList.add('visible');
+                    viewBtn.querySelector('.view-count').textContent = count;
+                    viewBtn.classList.add('visible');
                 } else {
-                    badge.style.display = 'none';
+                    badge.classList.remove('visible');
+                    viewBtn.classList.remove('visible');
                 }
             } catch(e) { /* ignore */ }
         }
         refreshCount();
 
-        // File input change: process photo
+        // ── File input change: stamp + save ──
         fileInput.addEventListener('change', async function() {
             const file = fileInput.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const rawDataUrl = e.target.result;
-                stampPhoto(rawDataUrl, roomName, ecsCode, async (stampedUrl) => {
+            reader.onload = function(ev) {
+                stampPhoto(ev.target.result, roomName, ecsCode, async (stamped) => {
                     try {
-                        await savePhoto(uniqueCodeId, roomName, ecsCode, stampedUrl);
+                        await savePhoto(uniqueCodeId, roomName, ecsCode, stamped);
                         await refreshCount();
-                        showMessageModal('Photo Saved', `Photo saved for ${ecsCode}.`);
+                        showMessageModal('Photo Saved ✓', `Photo saved for ${ecsCode}.`);
                     } catch(err) {
-                        console.error('Photo save failed:', err);
                         showMessageModal('Error', 'Could not save photo. Storage may be full.');
                     }
-                    // Reset input so same file can be picked again if needed
                     fileInput.value = '';
                 });
             };
             reader.readAsDataURL(file);
         });
 
-        // Camera button tap: if photos exist show viewer, otherwise trigger camera
-        camBtn.addEventListener('click', async function(e) {
+        // ── View button → open photo viewer ──
+        viewBtn.addEventListener('click', async function(e) {
             e.stopPropagation();
-            const photos = await getPhotosByCodeId(uniqueCodeId);
-            if (photos.length > 0) {
-                openPhotoViewer(uniqueCodeId, roomName, ecsCode, refreshCount);
-            } else {
-                fileInput.click();
-            }
+            openPhotoViewer(uniqueCodeId, roomName, ecsCode, refreshCount);
         });
 
-        // Long-press (500ms) always opens camera even if photos exist
-        let pressTimer = null;
-        camBtn.addEventListener('touchstart', () => {
-            pressTimer = setTimeout(() => { fileInput.click(); }, 500);
-        }, { passive: true });
-        camBtn.addEventListener('touchend', () => clearTimeout(pressTimer), { passive: true });
-        camBtn.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
-
-        cameraRow.appendChild(fileInput);
-        cameraRow.appendChild(camBtn);
-
-        // Add a small "＋ Add photo" label next to button
-        const addLabel = document.createElement('span');
-        addLabel.style.cssText = 'font-size:12px;color:#888;user-select:none;';
-        addLabel.textContent = 'Hold to add photo · Tap to view';
-        cameraRow.appendChild(addLabel);
-
+        cameraRow.appendChild(camLabel);
+        cameraRow.appendChild(viewBtn);
         rowDiv.appendChild(cameraRow);
-    }
-
-    // ── Show/hide camera button when status or comment is selected ────
-    function updateCameraVisibility(rowDiv, uniqueCodeId, roomName, ecsCode) {
-        const hasStatus = appState.checkData[uniqueCodeId] !== null && appState.checkData[uniqueCodeId] !== undefined;
-        const hasComment = !!(appState.codeSpecificComments[uniqueCodeId]);
-
-        if (hasStatus || hasComment) {
-            addCameraButtonToRow(rowDiv, uniqueCodeId, roomName, ecsCode);
-        }
-        // Never remove it once shown (user may have photos)
     }
 
     // ── Photo viewer modal ────────────────────────────────────────────
