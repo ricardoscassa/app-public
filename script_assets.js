@@ -1,14 +1,14 @@
 (async () => {
   /*
-    1. TEST WITH A FEW SERIALS FIRST.
-    2. Replace this list with your complete list once confirmed.
+    TEST WITH 2–3 SERIALS FIRST.
+    When confirmed, replace this list with your full list.
   */
   const serials = `
 1HLI10SE0086
 1RPE4634VK
 `
     .split(/\r?\n/)
-    .map(x => x.trim())
+    .map(value => value.trim())
     .filter(Boolean);
 
   const SERIAL_ID =
@@ -26,8 +26,10 @@
   const EXPORT_URL =
     "/download.ashx?type=xlsx&id=asset&function=material";
 
+  // Increase these if AssetTagz is slow.
   const SEARCH_DELAY_MS = 800;
   const EXPORT_DELAY_MS = 1200;
+  const SEARCH_TIMEOUT_MS = 30000;
 
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -41,12 +43,14 @@
         "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
 
       script.onload = resolve;
-      script.onerror = () =>
+
+      script.onerror = () => {
         reject(
           new Error(
-            "Could not load the Excel processing library. The work network may be blocking the SheetJS site."
+            "Could not load the Excel library. The SheetJS website may be blocked by the network."
           )
         );
+      };
 
       document.head.appendChild(script);
     });
@@ -67,7 +71,7 @@
 
   if (!form || !serialInput || !serialState || !applyButton) {
     throw new Error(
-      "Could not find the AssetTagz Serial Number or Apply controls."
+      "Could not find the AssetTagz Serial Number input or Apply button."
     );
   }
 
@@ -89,6 +93,24 @@
         currentPageInput.value = source.value;
       }
     }
+  }
+
+  function getAssetNumber(row) {
+    const assetNoKey = Object.keys(row).find(key => {
+      const normalised = String(key)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+
+      return [
+        "assetno",
+        "assetnumber",
+        "assetid"
+      ].includes(normalised);
+    });
+
+    if (!assetNoKey) return "";
+
+    return String(row[assetNoKey] ?? "").trim();
   }
 
   async function applySerial(serial) {
@@ -116,7 +138,7 @@
       const timeout = setTimeout(() => {
         form.target = originalTarget;
         reject(new Error(`Search timed out for ${serial}`));
-      }, 30000);
+      }, SEARCH_TIMEOUT_MS);
 
       frame.onload = () => {
         clearTimeout(timeout);
@@ -164,7 +186,7 @@
     const buffer = await response.arrayBuffer();
     const firstBytes = new Uint8Array(buffer.slice(0, 2));
 
-    // XLSX files normally start with PK because they are ZIP files.
+    // XLSX files are ZIP files and normally start with PK.
     if (firstBytes[0] !== 0x50 || firstBytes[1] !== 0x4b) {
       throw new Error(
         `The export response for ${serial} was not an Excel file.`
@@ -181,29 +203,55 @@
     const sheetName = workbook.SheetNames[0];
 
     if (!sheetName) {
-      return 0;
+      return {
+        sourceRows: 0,
+        addedRows: 0,
+        ignoredRows: 0
+      };
     }
 
     const sheet = workbook.Sheets[sheetName];
 
     const rows = XLSX.utils.sheet_to_json(sheet, {
       defval: "",
-      raw: false
+      raw: false,
+      blankrows: false
     });
 
+    let addedRows = 0;
+    let ignoredRows = 0;
+
     for (const row of rows) {
+      /*
+        AssetTagz adds an additional partial row in some exports.
+        Keep only genuine asset records that have an Asset No.
+      */
+      const assetNumber = getAssetNumber(row);
+
+      if (!assetNumber) {
+        ignoredRows++;
+        continue;
+      }
+
       combinedRows.push({
         "Requested Serial Number": serial,
         ...row
       });
+
+      addedRows++;
     }
 
-    return rows.length;
+    return {
+      sourceRows: rows.length,
+      addedRows,
+      ignoredRows
+    };
   }
 
   console.clear();
+
   console.log(
-    `Starting combined export for ${serials.length} serial numbers...`
+    `Starting combined export for ${serials.length} serial number(s)...`
   );
 
   for (let index = 0; index < serials.length; index++) {
@@ -218,23 +266,31 @@
       await wait(SEARCH_DELAY_MS);
 
       const workbook = await getExportWorkbook(serial);
-      const rowCount = appendWorkbookRows(workbook, serial);
+
+      const result = appendWorkbookRows(workbook, serial);
 
       summaryRows.push({
         "Requested Serial Number": serial,
-        Status: rowCount ? "Exported" : "No rows returned",
-        "Rows Added": rowCount,
+        Status: result.addedRows ? "Exported" : "No valid asset row found",
+        "Source Rows": result.sourceRows,
+        "Rows Added": result.addedRows,
+        "Partial / Empty Rows Ignored": result.ignoredRows,
         Error: ""
       });
 
-      console.log(`✓ ${serial}: ${rowCount} row(s) added.`);
+      console.log(
+        `✓ ${serial}: ${result.addedRows} valid row(s) added, ` +
+        `${result.ignoredRows} partial row(s) ignored.`
+      );
     } catch (error) {
       console.error(`✗ ${serial}:`, error);
 
       summaryRows.push({
         "Requested Serial Number": serial,
         Status: "Failed",
+        "Source Rows": 0,
         "Rows Added": 0,
+        "Partial / Empty Rows Ignored": 0,
         Error: error.message || String(error)
       });
     }
@@ -243,8 +299,10 @@
   }
 
   if (!combinedRows.length) {
+    console.table(summaryRows);
+
     throw new Error(
-      "No data rows were collected. Check the Run Summary output in the Console."
+      "No valid AssetTagz rows were collected. Check the Run Summary in the Console."
     );
   }
 
